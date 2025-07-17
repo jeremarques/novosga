@@ -28,7 +28,8 @@ ENV COMPOSER_CACHE_DIR=/tmp/
 ENV APP_ENV=prod
 ENV APP_DEBUG=0
 
-RUN curl -o composer.phar https://getcomposer.org/download/2.7.2/composer.phar
+# RUN curl -o composer.phar https://getcomposer.org/download/2.7.2/composer.phar
+COPY --from=composer:latest /usr/bin/composer /usr/local/bin/composer
 
 RUN set -xe \
     && echo "APP_BUILD_NUMBER=$GIT_COMMIT" >> .env.local \
