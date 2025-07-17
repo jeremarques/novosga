@@ -33,9 +33,9 @@ COPY --from=composer:latest /usr/bin/composer /usr/local/bin/composer
 
 RUN set -xe \
     && echo "APP_BUILD_NUMBER=$GIT_COMMIT" >> .env.local \
-    && php composer.phar install --no-dev --optimize-autoloader \
-    && php composer.phar dump-autoload --no-dev --classmap-authoritative \
-    && php composer.phar dump-env prod
+    && php composer install --no-dev --optimize-autoloader \
+    && php composer dump-autoload --no-dev --classmap-authoritative \
+    && php composer dump-env prod
 
 
 FROM alpine/openssl AS cert
