@@ -5,17 +5,16 @@ services:
     ports:
       - "80:8080"
     environment:
-      APP_ENV: 'prod'
+      APP_ENV: ${APP_ENV}
       # database connection
-      DATABASE_URL: 'mysql://root:5PH7opgDDYeldZp9HhU9WFbjBQohWxlLE9xrw8Z4Kpc05hHg6oFvt6UzCqrsbsrk@192.168.0.104:3206/novosga?charset=utf8mb4'
-      TZ: 'America/Sao_Paulo'
-      APP_LANGUAGE: 'pt_BR'
+      DATABASE_URL: ${DATABASE_URL}
+      APP_LANGUAGE: ${APP_LANGUAGE}
       # Endereço Mercure para publicar mensagem (onde "mercure" é o nome do host)
       # esse endereço será chamado internamente via o PHP
-      MERCURE_URL: http://192.168.0.10:3000/.well-known/mercure
+      MERCURE_URL: ${MERCURE_URL}
       # Endereço Mercure para consumir mensagem
       # esse endereço será chamado via o navegador web
-      MERCURE_PUBLIC_URL: http://192.168.0.10:3000/.well-known/mercure
+      MERCURE_PUBLIC_URL: ${MERCURE_PUBLIC_URL}
   mercure:
     image: novosga/mercure:v0.11
     restart: always
@@ -23,8 +22,8 @@ services:
       - "3000:3000"
     environment:
       # same value from ports
-      SERVER_NAME: ":3000"
+      SERVER_NAME: ${SERVER_NAME}
       # default publish key, must be changed
-      MERCURE_PUBLISHER_JWT_KEY: "!ChangeThisMercureHubJWTSecretKey!"
-      MERCURE_SUBSCRIBER_JWT_KEY: "!ChangeThisMercureHubJWTSecretKey!"
-      MERCURE_EXTRA_DIRECTIVES:  "anonymous 1; cors_origins *"
+      MERCURE_PUBLISHER_JWT_KEY: ${MERCURE_PUBLISHER_JWT_KEY}
+      MERCURE_SUBSCRIBER_JWT_KEY: ${MERCURE_SUBSCRIBER_JWT_KEY}
+      MERCURE_EXTRA_DIRECTIVES:  ${MERCURE_EXTRA_DIRECTIVES}
