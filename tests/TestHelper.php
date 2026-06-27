@@ -3,6 +3,8 @@
 namespace App\Tests;
 
 use App\DataFixtures\AppFixtures;
+use App\Entity\Agendamento;
+use App\Entity\Cliente;
 use App\Entity\Contador;
 use App\Entity\Local;
 use App\Entity\Lotacao;
@@ -14,12 +16,15 @@ use App\Entity\ServicoUsuario;
 use App\Entity\Unidade;
 use App\Entity\Usuario;
 use DateTimeImmutable;
+use DateTimeInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use League\Bundle\OAuth2ServerBundle\Entity\AccessToken as AccessTokenEntity;
 use League\Bundle\OAuth2ServerBundle\Entity\Client as ClientEntity;
 use League\Bundle\OAuth2ServerBundle\Entity\Scope as ScopeEntity;
 use League\Bundle\OAuth2ServerBundle\Manager\AccessTokenManagerInterface;
 use League\OAuth2\Server\CryptKey;
+use Novosga\Entity\AgendamentoInterface;
+use Novosga\Entity\ClienteInterface;
 use Novosga\Entity\LocalInterface;
 use Novosga\Entity\LotacaoInterface;
 use Novosga\Entity\PerfilInterface;
@@ -53,10 +58,12 @@ final class TestHelper
         $em->getConnection()->executeQuery('DELETE FROM perfis');
         $em->getConnection()->executeQuery('DELETE FROM atendimentos_codificados');
         $em->getConnection()->executeQuery('DELETE FROM atendimentos');
+        $em->getConnection()->executeQuery('DELETE FROM agendamentos');
         $em->getConnection()->executeQuery('DELETE FROM prioridades');
         $em->getConnection()->executeQuery('DELETE FROM servicos');
         $em->getConnection()->executeQuery('DELETE FROM unidades');
         $em->getConnection()->executeQuery('DELETE FROM locais');
+        $em->getConnection()->executeQuery('DELETE FROM clientes');
     }
 
     public static function getUser(EntityManagerInterface $em): UsuarioInterface
@@ -64,12 +71,16 @@ final class TestHelper
         return $em->getRepository(Usuario::class)->findOneBy(['login' => AppFixtures::USER_USERNAME]);
     }
 
-    public static function createUnidade(EntityManagerInterface $em, string $name = 'Test'): UnidadeInterface
-    {
+    public static function createUnidade(
+        EntityManagerInterface $em,
+        string $name = 'Test',
+        string $timezone = 'UTC',
+    ): UnidadeInterface {
         $unidade = (new Unidade())
             ->setNome(sprintf('%s %s ', $name, time()))
             ->setDescricao('test')
-            ->setAtivo(true);
+            ->setAtivo(true)
+            ->setTimezone($timezone);
 
         $em->persist($unidade);
         $em->flush();
@@ -134,6 +145,53 @@ final class TestHelper
         $em->flush();
 
         return $local;
+    }
+
+    public static function createCliente(
+        EntityManagerInterface $em,
+        string $name = 'Test',
+        ?string $documento = null,
+        string $telefone = '1234567890',
+        ?DateTimeInterface $dataNascimento = null,
+    ): ClienteInterface {
+        if ($documento === null) {
+            $documento = uniqid();
+        }
+
+        $cliente = (new Cliente())
+            ->setNome($name)
+            ->setDocumento($documento)
+            ->setEmail(sprintf('%s@test.com', strtolower($name)))
+            ->setTelefone($telefone)
+            ->setDataNascimento($dataNascimento);
+
+        $em->persist($cliente);
+        $em->flush();
+
+        return $cliente;
+    }
+
+    public static function createAgendamento(
+        EntityManagerInterface $em,
+        ClienteInterface $cliente,
+        UnidadeInterface $unidade,
+        ServicoInterface $servico,
+        DateTimeInterface $data,
+        DateTimeInterface $hora,
+        ?string $oid = null,
+    ): AgendamentoInterface {
+        $agendamento = (new Agendamento())
+            ->setCliente($cliente)
+            ->setUnidade($unidade)
+            ->setServico($servico)
+            ->setData($data)
+            ->setHora($hora)
+            ->setOid($oid);
+
+        $em->persist($agendamento);
+        $em->flush();
+
+        return $agendamento;
     }
 
     public static function generateJwtToken(ContainerInterface $container): string

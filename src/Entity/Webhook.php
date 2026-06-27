@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the Novo SGA project.
+ * This file is part of the NovoSGA project.
  *
  * (c) Rogerio Lino <rogeriolino@gmail.com>
  *
@@ -58,6 +58,13 @@ class Webhook implements TimestampableEntityInterface
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function setId(?int $id): static
+    {
+        $this->id = $id;
+
+        return $this;
     }
 
     public function getName(): ?string

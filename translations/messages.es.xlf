@@ -46,6 +46,10 @@
                 <source>label.disabled</source>
                 <target>Inactivo</target>
             </trans-unit>
+            <trans-unit id="label.timezone">
+                <source>label.timezone</source>
+                <target>Zona horaria</target>
+            </trans-unit>
             <trans-unit id="label.view">
                 <source>label.view</source>
                 <target>Ver</target>
@@ -105,6 +109,14 @@
             <trans-unit id="label.call_ticket_out_of_order">
                 <source>label.call_ticket_out_of_order</source>
                 <target>Permitir chamar atendimento fora de ordem</target>
+            </trans-unit>
+            <trans-unit id="label.change_ticket_type">
+                <source>label.change_ticket_type</source>
+                <target>Permitir cambiar tipo de atención</target>
+            </trans-unit>
+            <trans-unit id="label.appointment_confirmation_delay">
+                <source>label.appointment_confirmation_delay</source>
+                <target>Retraso máximo de confirmación de cita (minutos)</target>
             </trans-unit>
             <trans-unit id="label.url">
                 <source>label.url</source>
@@ -208,7 +220,7 @@
             </trans-unit>
             <trans-unit id="home.welcome.subtitle">
                 <source>home.welcome.subtitle</source>
-                <target>Novo SGA - Sistema de Gestión de Atención</target>
+                <target>NovoSGA - Sistema de Gestión de Atención</target>
             </trans-unit>
             <trans-unit id="home.welcome.button.read">
                 <source>home.welcome.button.read</source>
@@ -220,7 +232,7 @@
             </trans-unit>
             <trans-unit id="about.version.title">
                 <source>about.version.title</source>
-                <target>Novo SGA v%version%</target>
+                <target>NovoSGA v%version%</target>
             </trans-unit>
             <trans-unit id="about.version.subtitle">
                 <source>about.version.subtitle</source>
@@ -240,7 +252,7 @@
             </trans-unit>
             <trans-unit id="about.sponsor.description">
                 <source>about.sponsor.description</source>
-                <target><![CDATA[O projeto Novo SGA é desenvolvido e mantido por <b>Mangati</b> e membros da comunidade <b>Novo SGA</b>.]]></target>
+                <target><![CDATA[O projeto NovoSGA é desenvolvido e mantido por <b>Mangati</b> e membros da comunidade <b>NovoSGA</b>.]]></target>
             </trans-unit>
             <trans-unit id="about.community.title">
                 <source>about.community.title</source>
@@ -256,7 +268,7 @@
             </trans-unit>
             <trans-unit id="about.community.website.description">
                 <source>about.community.website.description</source>
-                <target>Noticias relacionadas con los proyectos del Novo SGA y lanzamiento de nuevas versiones</target>
+                <target>Noticias relacionadas con los proyectos del NovoSGA y lanzamiento de nuevas versiones</target>
             </trans-unit>
             <trans-unit id="about.community.website.button">
                 <source>about.community.website.button</source>
@@ -330,6 +342,42 @@
                 <source>label.email</source>
                 <target>Correo Electronico</target>
             </trans-unit>
+            <trans-unit id="label.birthday">
+                <source>label.birthday</source>
+                <target>Fecha de nacimiento</target>
+            </trans-unit>
+            <trans-unit id="label.address">
+                <source>label.address</source>
+                <target>Dirección</target>
+            </trans-unit>
+            <trans-unit id="label.endereco.pais">
+                <source>label.endereco.pais</source>
+                <target>País</target>
+            </trans-unit>
+            <trans-unit id="label.endereco.cep">
+                <source>label.endereco.cep</source>
+                <target>Código Postal</target>
+            </trans-unit>
+            <trans-unit id="label.endereco.estado">
+                <source>label.endereco.estado</source>
+                <target>Estado</target>
+            </trans-unit>
+            <trans-unit id="label.endereco.cidade">
+                <source>label.endereco.cidade</source>
+                <target>Ciudad</target>
+            </trans-unit>
+            <trans-unit id="label.endereco.logradouro">
+                <source>label.endereco.logradouro</source>
+                <target>Calle</target>
+            </trans-unit>
+            <trans-unit id="label.endereco.numero">
+                <source>label.endereco.numero</source>
+                <target>Número</target>
+            </trans-unit>
+            <trans-unit id="label.endereco.complemento">
+                <source>label.endereco.complemento</source>
+                <target>Complemento</target>
+            </trans-unit>
             <trans-unit id="profile.lotation">
                 <source>profile.lotation</source>
                 <target>Dotación</target>
@@ -369,6 +417,30 @@
             <trans-unit id="admin.menu.system">
                 <source>admin.menu.system</source>
                 <target>Sistema</target>
+            </trans-unit>
+            <trans-unit id="admin.menu.master_data">
+                <source>admin.menu.master_data</source>
+                <target>Registros</target>
+            </trans-unit>
+            <trans-unit id="admin.menu.integrations">
+                <source>admin.menu.integrations</source>
+                <target>Integraciones</target>
+            </trans-unit>
+            <trans-unit id="admin.menu.general">
+                <source>admin.menu.general</source>
+                <target>General</target>
+            </trans-unit>
+            <trans-unit id="admin.menu.data">
+                <source>admin.menu.data</source>
+                <target>Datos</target>
+            </trans-unit>
+            <trans-unit id="admin.data.title">
+                <source>admin.data.title</source>
+                <target>Datos</target>
+            </trans-unit>
+            <trans-unit id="admin.data.subtitle">
+                <source>admin.data.subtitle</source>
+                <target>Gestionar datos de atenciones</target>
             </trans-unit>
             <trans-unit id="admin.menu.unities">
                 <source>admin.menu.unities</source>
@@ -434,6 +506,10 @@
                 <source>admin.system.reset_tickets.success</source>
                 <target>Llamadas reiniciadas exitosamente</target>
             </trans-unit>
+            <trans-unit id="admin.system.reset_tickets.description">
+                <source>admin.system.reset_tickets.description</source>
+                <target>Mueve todos los tickets al historial. No se elimina ningún dato.</target>
+            </trans-unit>
             <trans-unit id="admin.system.clear_tickets">
                 <source>admin.system.clear_tickets</source>
                 <target>Limpieza de las llamadas</target>
@@ -446,13 +522,17 @@
                 <source>admin.system.clear_tickets.success</source>
                 <target>Llamadas eliminadas con éxito</target>
             </trans-unit>
+            <trans-unit id="admin.system.clear_tickets.description">
+                <source>admin.system.clear_tickets.description</source>
+                <target>&lt;b&gt;Cuidado:&lt;/b&gt; Elimina todos los datos de atención incluyendo el historial.</target>
+            </trans-unit>
             <trans-unit id="admin.modules.title">
                 <source>admin.modules.title</source>
                 <target>Módulos</target>
             </trans-unit>
             <trans-unit id="admin.modules.subtitle">
                 <source>admin.modules.subtitle</source>
-                <target>Módulos Novo SGA instalados</target>
+                <target>Módulos NovoSGA instalados</target>
             </trans-unit>
             <trans-unit id="admin.places.title">
                 <source>admin.places.title</source>
@@ -578,6 +658,46 @@
                 <source>admin.webhook.button.new</source>
                 <target>Nuevo webhook</target>
             </trans-unit>
+            <trans-unit id="admin.webhook.select.subtitle">
+                <source>admin.webhook.select.subtitle</source>
+                <target>Elija una integración predefinida o configúrela manualmente.</target>
+            </trans-unit>
+            <trans-unit id="admin.webhook.select.configure">
+                <source>admin.webhook.select.configure</source>
+                <target>Configurar</target>
+            </trans-unit>
+            <trans-unit id="admin.webhook.select.manual">
+                <source>admin.webhook.select.manual</source>
+                <target>Configuración manual</target>
+            </trans-unit>
+            <trans-unit id="admin.webhook.select.manual.description">
+                <source>admin.webhook.select.manual.description</source>
+                <target>Configure la URL, los encabezados y los eventos manualmente.</target>
+            </trans-unit>
+            <trans-unit id="admin.webhook.predefined.mangati_monitor.description">
+                <source>admin.webhook.predefined.mangati_monitor.description</source>
+                <target>Monitoreo del servicio en tiempo real. Siga colas, tickets e indicadores con total visibilidad.</target>
+            </trans-unit>
+            <trans-unit id="admin.webhook.predefined.mangati_avaliacao.description">
+                <source>admin.webhook.predefined.mangati_avaliacao.description</source>
+                <target>Encuestas de satisfacción del cliente al finalizar el ticket.</target>
+            </trans-unit>
+            <trans-unit id="admin.webhook.predefined.mangati_notificacao.description">
+                <source>admin.webhook.predefined.mangati_notificacao.description</source>
+                <target>Envíe un mensaje de WhatsApp al emitir y llamar un turno.</target>
+            </trans-unit>
+            <trans-unit id="label.access_token">
+                <source>label.access_token</source>
+                <target>Token de acceso</target>
+            </trans-unit>
+            <trans-unit id="label.author">
+                <source>label.author</source>
+                <target>Autor</target>
+            </trans-unit>
+            <trans-unit id="admin.webhook.predefined.homepage">
+                <source>admin.webhook.predefined.homepage</source>
+                <target>Visita la página del proyecto</target>
+            </trans-unit>
             <trans-unit id="admin.webapi.clients.title">
                 <source>admin.webapi.clients.title</source>
                 <target>Clientes</target>
@@ -642,6 +762,10 @@
                 <source>ticket.status.error</source>
                 <target>Error de selección</target>
             </trans-unit>
+            <trans-unit id="error.api.ticket_call_failed">
+                <source>error.api.ticket_call_failed</source>
+                <target>API ticket call failed</target>
+            </trans-unit>
             <trans-unit id="error.invalid_unity">
                 <source>error.invalid_unity</source>
                 <target>Unidad no válida</target>
@@ -657,6 +781,10 @@
             <trans-unit id="error.invalid_priority">
                 <source>error.invalid_priority</source>
                 <target>Prioridad inválida</target>
+            </trans-unit>
+            <trans-unit id="error.invalid_location">
+                <source>error.invalid_location</source>
+                <target>Local inválido</target>
             </trans-unit>
             <trans-unit id="error.user_unity_ticket_permission">
                 <source>error.user_unity_ticket_permission</source>
@@ -681,6 +809,26 @@
             <trans-unit id="error.new_ticket">
                 <source>error.new_ticket</source>
                 <target>Error al intentar crear una nueva llamada</target>
+            </trans-unit>
+            <trans-unit id="error.schedule.expired">
+                <source>error.schedule.expired</source>
+                <target>Turno expirado. Tiempo máximo de espera de %min% minutos.</target>
+            </trans-unit>
+            <trans-unit id="error.schedule.invalid_datetime">
+                <source>error.schedule.invalid_datetime</source>
+                <target>Fecha/hora de turno inválida.</target>
+            </trans-unit>
+            <trans-unit id="error.schedule.invalid_unity">
+                <source>error.schedule.invalid_unity</source>
+                <target>El turno no pertenece a la unidad seleccionada.</target>
+            </trans-unit>
+            <trans-unit id="error.schedule.invalid_service">
+                <source>error.schedule.invalid_service</source>
+                <target>El turno no pertenece al servicio seleccionado.</target>
+            </trans-unit>
+            <trans-unit id="error.schedule.invalid_situacao">
+                <source>error.schedule.invalid_situacao</source>
+                <target>El turno no está en un estado válido para ser atendido.</target>
             </trans-unit>
             <trans-unit id="label.color">
                 <source>label.color</source>

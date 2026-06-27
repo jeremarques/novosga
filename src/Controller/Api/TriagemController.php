@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the Novo SGA project.
+ * This file is part of the NovoSGA project.
  *
  * (c) Rogerio Lino <rogeriolino@gmail.com>
  *
@@ -18,9 +18,10 @@ use App\Service\TicketService;
 use App\Entity\Atendimento;
 use App\Service\AtendimentoService;
 use Exception;
-use Novosga\Entity\UsuarioInterface;
+use App\Entity\Usuario;
+use Novosga\Repository\AgendamentoRepositoryInterface;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
@@ -41,7 +42,7 @@ class TriagemController extends ApiControllerBase
         TranslatorInterface $translator,
         TicketService $service,
     ): Response {
-        $hash = $request->headers->get('X-HASH') ?? $request->get('hash');
+        $hash = $request->headers->get('X-HASH') ?? $request->query->get('hash');
 
         if ($hash !== $atendimento->hash()) {
             $error = $translator->trans('api.triage.invalid_hash');
@@ -58,6 +59,7 @@ class TriagemController extends ApiControllerBase
         Request $request,
         #[MapRequestPayload] NovaSenha $novaSenha,
         AtendimentoService $service,
+        AgendamentoRepositoryInterface $agendamentoRepository,
         LoggerInterface $logger
     ): Response {
         try {
@@ -65,14 +67,27 @@ class TriagemController extends ApiControllerBase
 
             $logger->info('[/api/distribui] ' . $json);
 
-            /** @var UsuarioInterface */
+            /** @var Usuario */
             $usuario = $this->getUser();
             $unidade = (int) $novaSenha->unidade;
             $servico = (int) $novaSenha->servico;
             $prioridade = (int) $novaSenha->prioridade;
             $cliente = $novaSenha->cliente;
+            $agendamento = null;
 
-            $response = $service->distribuiSenha($unidade, $usuario, $servico, $prioridade, $cliente);
+            if ($novaSenha->agendamento) {
+                $agendamento = $agendamentoRepository->find($novaSenha->agendamento);
+            }
+
+            $response = $service->distribuiSenha(
+                $unidade,
+                $usuario,
+                $servico,
+                $prioridade,
+                $cliente,
+                $agendamento,
+            );
+
             $status = 201;
         } catch (Exception $ex) {
             $response = [

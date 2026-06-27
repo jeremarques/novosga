@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the Novo SGA project.
+ * This file is part of the NovoSGA project.
  *
  * (c) Rogerio Lino <rogeriolino@gmail.com>
  *
@@ -66,6 +66,18 @@ class BehaviorSettingsFormType extends AbstractType
                     new NotNull(),
                 ],
             ])
+            ->add('changeTicketType', CheckboxType::class, [
+                'label' => 'label.change_ticket_type',
+                'required' => false,
+                'constraints' => [new NotNull()],
+            ])
+            ->add('appointmentConfirmationDelay', IntegerType::class, [
+                'label' => 'label.appointment_confirmation_delay',
+                'constraints' => [
+                    new NotNull(),
+                    new Range(min: 0, max: 1440),
+                ],
+            ])
         ;
     }
 
@@ -76,7 +88,7 @@ class BehaviorSettingsFormType extends AbstractType
         ]);
     }
 
-    public function getBlockPrefix()
+    public function getBlockPrefix(): string
     {
         return 'app_behavior';
     }

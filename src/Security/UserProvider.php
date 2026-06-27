@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the Novo SGA project.
+ * This file is part of the NovoSGA project.
  *
  * (c) Rogerio Lino <rogeriolino@gmail.com>
  *
@@ -56,7 +56,7 @@ class UserProvider extends EntityUserProvider
     {
         $usuario = $this->usuarioRepository->findOneByLogin($identifier);
 
-        if (null === $usuario) {
+        if (!($usuario instanceof Usuario)) {
             $e = new UserNotFoundException(sprintf('User "%s" not found.', $identifier));
             $e->setUserIdentifier($identifier);
 
@@ -72,7 +72,7 @@ class UserProvider extends EntityUserProvider
     public function refreshUser(UserInterface $user): UserInterface
     {
         $usuario = $this->usuarioRepository->find($user->getId());
-        if (null === $usuario) {
+        if (!($usuario instanceof Usuario)) {
             throw new UserNotFoundException();
         }
 
@@ -125,20 +125,21 @@ class UserProvider extends EntityUserProvider
         }
     }
 
-    public function loadUnidade(Usuario $usuario): ?UnidadeInterface
+    private function loadUnidade(Usuario $usuario): ?UnidadeInterface
     {
         $unidade = null;
-        $meta = $this
-            ->usuarioService
-            ->meta($usuario, UsuarioService::ATTR_SESSION_UNIDADE);
+        $unidades = $this->unidadeRepository->findByUsuario($usuario);
+        $meta = $this->usuarioService->meta($usuario, UsuarioService::ATTR_SESSION_UNIDADE);
 
-        if ($meta) {
-            $unidade = $this->unidadeRepository->find($meta->getValue());
-        } else {
-            $unidades = $this->unidadeRepository->findByUsuario($usuario);
-            if (count($unidades) > 0) {
-                $unidade = $unidades[0];
-            }
+        if ($meta?->getValue()) {
+            $unidade = array_values(array_filter(
+                $unidades,
+                fn (UnidadeInterface $u) => $u->getId() === (int) $meta->getValue(),
+            ))[0] ?? null;
+        }
+
+        if (!$unidade && count($unidades) > 0) {
+            $unidade = $unidades[0];
         }
 
         return $unidade;

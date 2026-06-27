@@ -1,6 +1,11 @@
 {% extends "admin.html.twig" %}
 
 {% block adminContent %}
+    <div>
+        <h1>Geral</h1>
+        <p>Configurações gerais</p>
+    </div>
+
     {% include 'flashMessages.html.twig' %}
 
     <div class="row row-cols-2">
@@ -8,7 +13,7 @@
             {{ form_start(appearanceForm) }}
                 <div class="card h-100">
                     <div class="card-header">
-                        <i class="fa fa-paint-brush"></i> 
+                        <i class="fa fa-paint-brush"></i>
                         {{ 'admin.system.appearance'|trans }}
                     </div>
                     <div class="card-body">
@@ -29,7 +34,7 @@
                             <div class="col-4">
                                 {% if appearanceForm.vars.data.logoNavbar %}
                                     <div>
-                                        <img src="{{ appearanceForm.vars.data.logoNavbar }}">
+                                        <img src="{{ appearanceForm.vars.data.logoNavbar }}" style="max-width: 100%">
                                         <button type="button" class="btn btn-danger" data-remove-file="logoNavbar">
                                             <i class="fa fa-trash"></i>
                                         </button>
@@ -49,7 +54,7 @@
                             <div class="col-4">
                                 {% if appearanceForm.vars.data.logoLogin %}
                                     <div>
-                                        <img src="{{ appearanceForm.vars.data.logoLogin }}">
+                                        <img src="{{ appearanceForm.vars.data.logoLogin }}" style="max-width: 100%">
                                         <button type="button" class="btn btn-danger" data-remove-file="logoLogin">
                                             <i class="fa fa-trash"></i>
                                         </button>
@@ -71,7 +76,7 @@
             {{ form_start(queueForm) }}
                 <div class="card h-100">
                     <div class="card-header">
-                        <i class="fa fa-cogs"></i> 
+                        <i class="fa fa-cogs"></i>
                         {{ 'admin.system.queue_ordering'|trans }}
                     </div>
                     {{ form_row(queueForm.ordering, { label: false }) }}
@@ -90,7 +95,7 @@
             {{ form_start(behaviorForm) }}
                 <div class="card mb-3">
                     <div class="card-header">
-                        <i class="fa fa-handshake-o"></i> 
+                        <i class="fa fa-handshake-o"></i>
                         {{ 'admin.system.behavior'|trans }}
                     </div>
                     <div class="card-body">
@@ -99,10 +104,12 @@
                                 {{ form_row(behaviorForm.prioritySwap) }}
                                 {{ form_row(behaviorForm.prioritySwapMethod) }}
                                 {{ form_row(behaviorForm.prioritySwapCount) }}
+                                {{ form_row(behaviorForm.appointmentConfirmationDelay) }}
                             </div>
                             <div class="col">
                                 {{ form_row(behaviorForm.callTicketByService) }}
                                 {{ form_row(behaviorForm.callTicketOutOfOrder) }}
+                                {{ form_row(behaviorForm.changeTicketType) }}
                             </div>
                         </div>
                     </div>
@@ -116,71 +123,6 @@
             {{ form_end(behaviorForm) }}
         </div>
     </div>
-
-    <div class="card">
-        <div class="card-header text-white bg-danger">
-            <i class="fa fa-warning"></i> 
-            {{ 'admin.system.danger_zone'|trans }}
-        </div>
-        <table class="table">
-            <tbody>
-                <tr>
-                    <td>
-                        {{ 'admin.system.reset_tickets'|trans }}
-                    </td>
-                    <td class="text-end">
-                        <button class="btn btn-danger"
-                                onclick="return App.Admin.reiniciarSenhas('{{ 'admin.system.reset_tickets.alert'|trans }}')">
-                            <i class="fa fa-refresh"></i>
-                            {{ 'button.reset'|trans }}
-                        </button>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        {{ 'admin.system.clear_tickets'|trans }}
-                    </td>
-                    <td class="text-end">
-                        <button class="btn btn-danger"
-                                onclick="return App.Admin.limparSenhas('{{ 'admin.system.clear_tickets.alert'|trans }}')">
-                            <i class="fa fa-refresh"></i>
-                            {{ 'button.reset'|trans }}
-                        </button>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-
-    {# reiniciar #}
-    <div id="dialog-reiniciar" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">{{ 'label.success'|trans }}</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p>{{ 'admin.system.reset_tickets.success'|trans }}</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {# limpar #}
-    <div id="dialog-limpar" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">{{ 'label.success'|trans }}</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p>{{ 'admin.system.clear_tickets.success'|trans }}</p>
-                </div>
-            </div>
-        </div>
-    </div>
 {% endblock %}
 
 {% block javascripts %}
@@ -188,7 +130,7 @@
     <script>
         (function () {
             'use strict'
-            
+
             const btns = [...document.querySelectorAll('[data-remove-file]')];
             btns.forEach((elem) => {
                 elem.addEventListener('click', (e) => {

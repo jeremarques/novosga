@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the Novo SGA project.
+ * This file is part of the NovoSGA project.
  *
  * (c) Rogerio Lino <rogeriolino@gmail.com>
  *
@@ -23,11 +23,6 @@ use Novosga\Repository\UnidadeRepositoryInterface;
 
 /**
  * @extends ServiceEntityRepository<UnidadeInterface>
- *
- * @method Unidade|null find($id, $lockMode = null, $lockVersion = null)
- * @method Unidade|null findOneBy(array $criteria, array $orderBy = null)
- * @method Unidade[]    findAll()
- * @method Unidade[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  *
  * @author Rogério Lino <rogeriolino@gmail.com>
  */

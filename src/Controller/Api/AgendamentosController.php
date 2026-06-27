@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the Novo SGA project.
+ * This file is part of the NovoSGA project.
  *
  * (c) Rogerio Lino <rogeriolino@gmail.com>
  *
@@ -16,7 +16,7 @@ namespace App\Controller\Api;
 use App\Entity\Agendamento;
 use App\Form\Api\AgendamentoType;
 use App\Service\AtendimentoService;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -34,6 +34,24 @@ class AgendamentosController extends ApiCrudController
     public function getEntityName(): string
     {
         return Agendamento::class;
+    }
+
+    public function getSearchableFields(): array
+    {
+        return [
+            'id',
+            'data',
+            'hora',
+            'situacao',
+            'oid',
+            'cliente.nome',
+            'cliente.documento',
+            'cliente.email',
+            'cliente.telefone',
+            'cliente.dataNascimento',
+            'servico.id',
+            'unidade.id',
+        ];
     }
 
     #[Route('', methods: ['POST'])]

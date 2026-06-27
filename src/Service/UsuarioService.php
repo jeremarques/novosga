@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the Novo SGA project.
+ * This file is part of the NovoSGA project.
  *
  * (c) Rogerio Lino <rogeriolino@gmail.com>
  *
@@ -167,7 +167,7 @@ class UsuarioService implements UsuarioServiceInterface
         UsuarioInterface $usuario,
         ServicoInterface $servico,
         UnidadeInterface $unidade
-    ): ServicoUsuario {
+    ): ServicoUsuarioInterface {
         $em = $this->storage->getManager();
 
         $servicoUsuario = new ServicoUsuario();
@@ -188,7 +188,7 @@ class UsuarioService implements UsuarioServiceInterface
         UsuarioInterface $usuario,
         ServicoInterface $servico,
         UnidadeInterface $unidade
-    ): ?ServicoUsuario {
+    ): ?ServicoUsuarioInterface {
         $em = $this->storage->getManager();
         $servicoUsuario = $this->servicoUsuarioRepository->findOneBy([
             'usuario' => $usuario,
@@ -211,7 +211,7 @@ class UsuarioService implements UsuarioServiceInterface
         ServicoInterface $servico,
         UnidadeInterface $unidade,
         int $peso,
-    ): ?ServicoUsuario {
+    ): ?ServicoUsuarioInterface {
         $em = $this->storage->getManager();
         $servicoUsuario = $this->servicoUsuarioRepository->findOneBy([
             'usuario' => $usuario,

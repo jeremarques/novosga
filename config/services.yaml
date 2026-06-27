@@ -5,8 +5,8 @@
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
     locale: '%env(APP_LANGUAGE)%'
-    version: '2.2.6' # x-release-please-version
-    title: 'Novo SGA CE'
+    version: '2.3-dev' # x-release-please-version
+    title: 'NovoSGA CE'
     mercure_url: '%env(MERCURE_PUBLIC_URL)%'
     app.build_number: '%env(default::APP_BUILD_NUMBER)%'
     # https://symfony.com/doc/current/performance.html
@@ -72,6 +72,9 @@ services:
     Novosga\Repository\LocalRepositoryInterface: '@App\Repository\LocalRepository'
     Novosga\Repository\LotacaoRepositoryInterface: '@App\Repository\LotacaoRepository'
     Novosga\Repository\MetadataRepositoryInterface: '@App\Repository\MetadataRepository'
+    Novosga\Repository\PainelMetadataRepositoryInterface: '@App\Repository\PainelMetadataRepository'
+    Novosga\Repository\PainelRepositoryInterface: '@App\Repository\PainelRepository'
+    Novosga\Repository\PainelServicoRepositoryInterface: '@App\Repository\PainelServicoRepository'
     Novosga\Repository\PerfilRepositoryInterface: '@App\Repository\PerfilRepository'
     Novosga\Repository\PrioridadeRepositoryInterface: '@App\Repository\PrioridadeRepository'
     Novosga\Repository\ServicoRepositoryInterface: '@App\Repository\ServicoRepository'
@@ -92,11 +95,12 @@ services:
     Novosga\Service\ClienteServiceInterface: '@App\Service\ClienteService'
     Novosga\Service\FilaServiceInterface: '@App\Service\FilaService'
     Novosga\Service\LotacaoServiceInterface: '@App\Service\LotacaoService'
+    Novosga\Service\ModuleServiceInterface: '@App\Service\ModuleService'
+    Novosga\Service\PainelServiceInterface: '@App\Service\PainelService'
     Novosga\Service\ServicoServiceInterface: '@App\Service\ServicoService'
     Novosga\Service\UnidadeServiceInterface: '@App\Service\UnidadeService'
     Novosga\Service\UsuarioServiceInterface: '@App\Service\UsuarioService'
     Novosga\Service\TicketServiceInterface: '@App\Service\TicketService'
-    Novosga\Service\ModuleServiceInterface: '@App\Service\ModuleService'
     Novosga\Service\FileUploaderServiceInterface: '@App\Service\FileUploaderService'
 
     # default service implementation
@@ -105,7 +109,7 @@ services:
     # storage factory
     Novosga\Infrastructure\StorageInterface:
         factory: ['App\Infrastructure\StorageFactory', 'createStorage']
-        arguments: ['@doctrine.orm.entity_manager']
+        arguments: ['@doctrine.orm.entity_manager', '@Psr\Clock\ClockInterface']
 
 
 when@test:

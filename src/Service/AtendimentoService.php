@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the Novo SGA project.
+ * This file is part of the NovoSGA project.
  *
  * (c) Rogerio Lino <rogeriolino@gmail.com>
  *
@@ -13,7 +13,8 @@ declare(strict_types=1);
 
 namespace App\Service;
 
-use DateTime;
+use DateTimeImmutable;
+use DateTimeZone;
 use Exception;
 use App\Entity\Atendimento;
 use App\Entity\AtendimentoCodificado;
@@ -61,6 +62,7 @@ use Novosga\Event\TicketsResetEvent;
 use Novosga\Event\TicketStartEvent;
 use Novosga\Event\TicketTransferedEvent;
 use Novosga\Infrastructure\StorageInterface;
+use Novosga\Service\ApplicationSettingsServiceInterface;
 use Novosga\Service\AtendimentoServiceInterface;
 use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
@@ -86,6 +88,7 @@ class AtendimentoService implements AtendimentoServiceInterface
         private readonly AtendimentoMetadataRepository $atendimentoMetaRepository,
         private readonly ServicoUnidadeRepository $servicoUnidadeRepository,
         private readonly ClienteRepository $clienteRepository,
+        private readonly ApplicationSettingsServiceInterface $settingsService,
     ) {
     }
 
@@ -159,6 +162,7 @@ class AtendimentoService implements AtendimentoServiceInterface
         // prioridade
         $senha->setPeso($atendimento->getPrioridade()->getPeso());
         $senha->setPrioridade($atendimento->getPrioridade()->getNome());
+        $senha->setCorPrioridade($atendimento->getPrioridade()->getCor());
         // cliente
         if ($atendimento->getCliente()) {
             $senha->setNomeCliente($atendimento->getCliente()->getNome());
@@ -402,8 +406,8 @@ class AtendimentoService implements AtendimentoServiceInterface
         int|UsuarioInterface $usuario,
         int|ServicoInterface $servico,
         int|PrioridadeInterface $prioridade,
-        ClienteInterface $cliente = null,
-        AgendamentoInterface $agendamento = null,
+        ?ClienteInterface $cliente = null,
+        ?AgendamentoInterface $agendamento = null,
     ): AtendimentoInterface {
         $om = $this->storage->getManager();
 
@@ -454,6 +458,18 @@ class AtendimentoService implements AtendimentoServiceInterface
             }
         }
 
+        if ($agendamento) {
+            if ($agendamento->getSituacao() !== AgendamentoInterface::SITUACAO_AGENDADO) {
+                throw new Exception($this->translator->trans('error.schedule.invalid_situacao'));
+            }
+            if ($agendamento->getUnidade()?->getId() !== $unidade->getId()) {
+                throw new Exception($this->translator->trans('error.schedule.invalid_unity'));
+            }
+            if ($agendamento->getServico()?->getId() !== $servico->getId()) {
+                throw new Exception($this->translator->trans('error.schedule.invalid_service'));
+            }
+        }
+
         $su = $this->checkServicoUnidade($unidade, $servico);
 
         if (
@@ -488,9 +504,34 @@ class AtendimentoService implements AtendimentoServiceInterface
         $atendimento->getSenha()->setSigla($su->getSigla());
 
         if ($agendamento) {
+            $timezone = $unidade->getDateTimeZone();
             $data = $agendamento->getData()->format('Y-m-d');
             $hora = $agendamento->getHora()->format('H:i');
-            $dtAge = DateTime::createFromFormat('Y-m-d H:i', "{$data} {$hora}");
+            $dtAgeUnidade = DateTimeImmutable::createFromFormat(
+                'Y-m-d H:i',
+                "{$data} {$hora}",
+                $timezone,
+            );
+            if ($dtAgeUnidade === false) {
+                throw new Exception($this->translator->trans('error.schedule.invalid_datetime'));
+            }
+
+            $now = $this->clock->now()->setTimezone($timezone);
+            if ($dtAgeUnidade < $now) {
+                $diff = $now->diff($dtAgeUnidade);
+                $mins = $diff->i + ($diff->h * 60) + ($diff->days * 24 * 60);
+                $maxDelay = $this->settingsService
+                    ->loadBehaviorSettings()
+                    ->appointmentConfirmationDelay;
+                if ($mins > $maxDelay) {
+                    throw new Exception($this->translator->trans(
+                        'error.schedule.expired',
+                        ['%min%' => $maxDelay],
+                    ));
+                }
+            }
+
+            $dtAge = $dtAgeUnidade->setTimezone(new DateTimeZone('UTC'));
             $atendimento
                 ->setDataAgendamento($dtAge)
                 ->setCliente($agendamento->getCliente());
@@ -538,7 +579,7 @@ class AtendimentoService implements AtendimentoServiceInterface
 
         $atendimento
             ->setStatus(self::ATENDIMENTO_INICIADO)
-            ->setDataInicio(new DateTime())
+            ->setDataInicio($this->clock->now())
             ->setUsuario($usuario);
 
         $tempoDeslocamento = $atendimento->getDataInicio()->diff($atendimento->getDataChamada());
@@ -572,7 +613,7 @@ class AtendimentoService implements AtendimentoServiceInterface
         }
 
         $atendimento
-            ->setDataFim(new DateTime())
+            ->setDataFim($this->clock->now())
             ->setStatus(self::NAO_COMPARECEU)
             ->setUsuario($usuario);
 
@@ -607,7 +648,7 @@ class AtendimentoService implements AtendimentoServiceInterface
         AtendimentoInterface $atendimento,
         UsuarioInterface $usuario,
         ServicoInterface|int $novoServico,
-        UsuarioInterface|int $novoAtendente = null,
+        UsuarioInterface|int|null $novoAtendente = null,
     ): AtendimentoInterface {
         $status = $atendimento->getStatus();
         if (!in_array($status, [ self::ATENDIMENTO_INICIADO, self::ATENDIMENTO_ENCERRADO ])) {
@@ -636,7 +677,7 @@ class AtendimentoService implements AtendimentoServiceInterface
         ));
 
         $atendimento->setStatus(self::ERRO_TRIAGEM);
-        $atendimento->setDataFim(new DateTime());
+        $atendimento->setDataFim($this->clock->now());
 
         $tempoPermanencia = $atendimento->getDataFim()->diff($atendimento->getDataChegada());
         $tempoAtendimento = new \DateInterval('P0M');
@@ -715,7 +756,7 @@ class AtendimentoService implements AtendimentoServiceInterface
             $usuario,
         ));
 
-        $now = new DateTime();
+        $now = $this->clock->now();
         $atendimento
             ->setDataFim($now)
             ->setStatus(self::SENHA_CANCELADA);
@@ -895,11 +936,7 @@ class AtendimentoService implements AtendimentoServiceInterface
                 throw new Exception('Novo status inválido.');
         }
 
-        if (!is_array($statusAtual)) {
-            $statusAtual = [$statusAtual];
-        }
-
-        $data = (new DateTime())->format('Y-m-d H:i:s');
+        $data = $this->clock->now();
 
         $qb = $this
             ->atendimentoRepository
@@ -907,11 +944,9 @@ class AtendimentoService implements AtendimentoServiceInterface
             ->update()
             ->set('e.status', ':novoStatus');
 
-        if ($campoData !== null) {
-            $qb
-                ->set("e.{$campoData}", ':data')
-                ->setParameter('data', $data);
-        }
+        $qb
+            ->set("e.{$campoData}", ':data')
+            ->setParameter('data', $data);
 
         $qb
             ->where('e.id = :id')
@@ -1000,7 +1035,7 @@ class AtendimentoService implements AtendimentoServiceInterface
             ->setServico($novoServico)
             ->setUnidade($atendimento->getUnidade())
             ->setPai($atendimento)
-            ->setDataChegada(new DateTime())
+            ->setDataChegada($this->clock->now())
             ->setStatus(self::SENHA_EMITIDA)
             ->setUsuario($novoAtendente)
             ->setUsuarioTriagem($atendimento->getUsuario())

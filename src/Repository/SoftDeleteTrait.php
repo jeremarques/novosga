@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the Novo SGA project.
+ * This file is part of the NovoSGA project.
  *
  * (c) Rogerio Lino <rogeriolino@gmail.com>
  *
@@ -25,18 +25,16 @@ trait SoftDeleteTrait
      * @param array<string,string> $orderBy
      * @return T[]
      */
-    public function findBy(array $criteria, array $orderBy = null, int $limit = null, int $offset = null): array
+    public function findBy(array $criteria, ?array $orderBy = null, ?int $limit = null, ?int $offset = null): array
     {
         $qb = $this
             ->createQueryBuilder('e')
             ->where('e.deletedAt IS NULL');
 
-        if (is_array($criteria)) {
-            foreach ($criteria as $fieldName => $value) {
-                $qb
-                    ->andWhere("e.{$fieldName} = :{$fieldName}")
-                    ->setParameter($fieldName, $value);
-            }
+        foreach ($criteria as $fieldName => $value) {
+            $qb
+                ->andWhere("e.{$fieldName} = :{$fieldName}")
+                ->setParameter($fieldName, $value);
         }
 
         if (is_array($orderBy)) {

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the Novo SGA project.
+ * This file is part of the NovoSGA project.
  *
  * (c) Rogerio Lino <rogeriolino@gmail.com>
  *
@@ -40,6 +40,8 @@ use Novosga\Event\PreTicketCreateEvent;
 use Novosga\Event\TicketCalledEvent;
 use Novosga\Event\TicketCreatedEvent;
 use Novosga\Infrastructure\StorageInterface;
+use Novosga\Service\ApplicationSettingsServiceInterface;
+use Novosga\Settings\BehaviorSettings;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Clock\ClockInterface;
@@ -58,6 +60,7 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 class AtendimentoServiceTest extends TestCase
 {
     private const TEST_LOCALE = 'pt_BR';
+    private const CONFIGURED_DELAY = 30;
 
     private ClockInterface $clock;
     private StorageInterface&MockObject $storage;
@@ -70,6 +73,7 @@ class AtendimentoServiceTest extends TestCase
     private AtendimentoMetadataRepository&MockObject $atendimentoMetaRepository;
     private ServicoUnidadeRepository&MockObject $servicoUnidadeRepository;
     private ClienteRepository&MockObject $clienteRepository;
+    private ApplicationSettingsServiceInterface&MockObject $settingsService;
 
     private AtendimentoService $service;
 
@@ -86,8 +90,15 @@ class AtendimentoServiceTest extends TestCase
         $this->atendimentoMetaRepository = $this->createMock(AtendimentoMetadataRepository::class);
         $this->servicoUnidadeRepository = $this->createMock(ServicoUnidadeRepository::class);
         $this->clienteRepository = $this->createMock(ClienteRepository::class);
+        $this->settingsService = $this->createMock(ApplicationSettingsServiceInterface::class);
 
         $this->translator->addLoader('array', new ArrayLoader());
+
+        $this->settingsService
+            ->method('loadBehaviorSettings')
+            ->willReturn(new BehaviorSettings(
+                appointmentConfirmationDelay: self::CONFIGURED_DELAY,
+            ));
 
         $this->service = new AtendimentoService(
             $this->clock,
@@ -101,6 +112,7 @@ class AtendimentoServiceTest extends TestCase
             $this->atendimentoMetaRepository,
             $this->servicoUnidadeRepository,
             $this->clienteRepository,
+            $this->settingsService,
         );
     }
 
@@ -140,14 +152,19 @@ class AtendimentoServiceTest extends TestCase
                 $this->assertEquals($servicoUnidade->getMensagem(), $painelSenha->getMensagem());
             });
 
+        $matcher = $this->exactly(2);
         $this
             ->dispatcher
-            ->expects($this->exactly(2))
+            ->expects($matcher)
             ->method('dispatch')
-            ->withConsecutive(
-                [ $this->isInstanceOf(PreTicketCallEvent::class) ],
-                [ $this->isInstanceOf(TicketCalledEvent::class) ],
-            );
+            ->willReturnCallback(function (object $event) use ($matcher): object {
+                match ($matcher->numberOfInvocations()) {
+                    1 => $this->assertInstanceOf(PreTicketCallEvent::class, $event),
+                    2 => $this->assertInstanceOf(TicketCalledEvent::class, $event),
+                    default => $this->fail('Unexpected dispatch call'),
+                };
+                return $event;
+            });
 
         $this
             ->mercureService
@@ -536,14 +553,19 @@ class AtendimentoServiceTest extends TestCase
             ->with($unidade, $servico)
             ->willReturn($servicoUnidade);
 
+        $matcher2 = $this->exactly(2);
         $this
             ->dispatcher
-            ->expects($this->exactly(2))
+            ->expects($matcher2)
             ->method('dispatch')
-            ->withConsecutive(
-                [ $this->isInstanceOf(PreTicketCreateEvent::class) ],
-                [ $this->isInstanceOf(TicketCreatedEvent::class) ],
-            );
+            ->willReturnCallback(function (object $event) use ($matcher2): object {
+                match ($matcher2->numberOfInvocations()) {
+                    1 => $this->assertInstanceOf(PreTicketCreateEvent::class, $event),
+                    2 => $this->assertInstanceOf(TicketCreatedEvent::class, $event),
+                    default => $this->fail('Unexpected dispatch call'),
+                };
+                return $event;
+            });
 
         $this
             ->storage
@@ -633,6 +655,8 @@ class AtendimentoServiceTest extends TestCase
         $servicoUnidade = new ServicoUnidade();
 
         $agendamento = (new Agendamento())
+            ->setUnidade($unidade)
+            ->setServico($servico)
             ->setData($this->clock->now())
             ->setHora($this->clock->now())
             ->setCliente(new Cliente());
@@ -665,6 +689,240 @@ class AtendimentoServiceTest extends TestCase
 
         $this->assertNotNull($atendimento->getId());
         $this->assertSame($agendamento->getCliente(), $atendimento->getCliente());
+    }
+
+    public function testDistribuiSenhaWithExpiredAppointment(): void
+    {
+        $unidade = new Unidade();
+        $usuario = (new Usuario())->setAdmin(true);
+        $servico = new Servico();
+        $prioridade = new Prioridade();
+        $servicoUnidade = new ServicoUnidade();
+
+        // Appointment 32 minutes in the past — exceeds configured delay of 30 minutes
+        $appointmentTime = $this->clock
+            ->now()
+            ->modify("-" . self::CONFIGURED_DELAY . " minutes -2 minutes");
+        $agendamento = (new Agendamento())
+            ->setUnidade($unidade)
+            ->setServico($servico)
+            ->setData($appointmentTime)
+            ->setHora($appointmentTime)
+            ->setCliente(new Cliente());
+
+        $this
+            ->servicoUnidadeRepository
+            ->expects($this->once())
+            ->method('get')
+            ->with($unidade, $servico)
+            ->willReturn($servicoUnidade);
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('error.schedule.expired');
+
+        $this->service->distribuiSenha($unidade, $usuario, $servico, $prioridade, null, $agendamento);
+    }
+
+    public function testDistribuiSenhaWithAppointmentFromDifferentUnity(): void
+    {
+        $unidade = (new Unidade())->setId(1);
+        $outraUnidade = (new Unidade())->setId(2);
+        $usuario = (new Usuario())->setAdmin(true);
+        $servico = new Servico();
+        $prioridade = new Prioridade();
+
+        $agendamento = (new Agendamento())
+            ->setUnidade($outraUnidade)
+            ->setServico($servico)
+            ->setData($this->clock->now())
+            ->setHora($this->clock->now())
+            ->setCliente(new Cliente());
+
+        $this->translator->addResource('array', [
+            'error.schedule.invalid_unity' => 'O agendamento não pertence à unidade selecionada.',
+        ], self::TEST_LOCALE);
+
+        /** @var EntityManagerInterface&MockObject */
+        $em = $this->createMock(EntityManagerInterface::class);
+        $this->storage->method('getManager')->willReturn($em);
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('O agendamento não pertence à unidade selecionada.');
+
+        $this->service->distribuiSenha($unidade, $usuario, $servico, $prioridade, null, $agendamento);
+    }
+
+    public function testDistribuiSenhaWithAppointmentFromDifferentService(): void
+    {
+        $unidade = (new Unidade())->setId(1);
+        $servico = (new Servico())->setId(1);
+        $outroServico = (new Servico())->setId(2);
+        $usuario = (new Usuario())->setAdmin(true);
+        $prioridade = new Prioridade();
+
+        $agendamento = (new Agendamento())
+            ->setUnidade($unidade)
+            ->setServico($outroServico)
+            ->setData($this->clock->now())
+            ->setHora($this->clock->now())
+            ->setCliente(new Cliente());
+
+        $this->translator->addResource('array', [
+            'error.schedule.invalid_service' => 'O agendamento não pertence ao serviço selecionado.',
+        ], self::TEST_LOCALE);
+
+        /** @var EntityManagerInterface&MockObject */
+        $em = $this->createMock(EntityManagerInterface::class);
+        $this->storage->method('getManager')->willReturn($em);
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('O agendamento não pertence ao serviço selecionado.');
+
+        $this->service->distribuiSenha($unidade, $usuario, $servico, $prioridade, null, $agendamento);
+    }
+
+    public function testDistribuiSenhaWithConfirmedAppointmentFails(): void
+    {
+        $unidade = (new Unidade())->setId(1);
+        $servico = (new Servico())->setId(1);
+        $usuario = (new Usuario())->setAdmin(true);
+        $prioridade = new Prioridade();
+
+        $agendamento = (new Agendamento())
+            ->setUnidade($unidade)
+            ->setServico($servico)
+            ->setSituacao(Agendamento::SITUACAO_CONFIRMADO)
+            ->setData($this->clock->now())
+            ->setHora($this->clock->now())
+            ->setCliente(new Cliente());
+
+        $this->translator->addResource('array', [
+            'error.schedule.invalid_situacao' =>
+                'O agendamento não está em situação válida para distribuição de senha.',
+        ], self::TEST_LOCALE);
+
+        /** @var EntityManagerInterface&MockObject */
+        $em = $this->createMock(EntityManagerInterface::class);
+        $this->storage->method('getManager')->willReturn($em);
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('O agendamento não está em situação válida para distribuição de senha.');
+
+        $this->service->distribuiSenha($unidade, $usuario, $servico, $prioridade, null, $agendamento);
+    }
+
+    /**
+     * @dataProvider timezoneProvider
+     */
+    public function testDistribuiSenhaWithTimezone(string $timezone, string $expectedTzName): void
+    {
+        $unidade = (new Unidade())->setTimezone($timezone);
+        $usuario = (new Usuario())->setAdmin(true);
+        $servico = new Servico();
+        $prioridade = new Prioridade();
+        $servicoUnidade = new ServicoUnidade();
+
+        $this
+            ->servicoUnidadeRepository
+            ->expects($this->once())
+            ->method('get')
+            ->with($unidade, $servico)
+            ->willReturn($servicoUnidade);
+
+        $this
+            ->storage
+            ->expects($this->once())
+            ->method('distribui')
+            ->with(
+                $this->isInstanceOf(Atendimento::class),
+                $this->isNull(),
+            )
+            ->willReturnCallback(function (Atendimento $atendimento) use ($expectedTzName) {
+                $tz = $atendimento->getUnidade()->getDateTimeZone();
+                $now = $this->clock->now()->setTimezone($tz);
+
+                $atendimento->setId(1);
+                $atendimento->setDataChegada($now);
+
+                $this->assertSame($expectedTzName, $now->getTimezone()->getName());
+                $this->assertSame(
+                    $expectedTzName,
+                    $atendimento->getDataChegada()->getTimezone()->getName(),
+                );
+            });
+
+        $atendimento = $this->service->distribuiSenha(
+            $unidade,
+            $usuario,
+            $servico,
+            $prioridade,
+        );
+
+        $this->assertNotNull($atendimento->getId());
+        $this->assertSame($timezone, $atendimento->getUnidade()->getTimezone());
+        $this->assertSame(
+            $expectedTzName,
+            $atendimento->getDataChegada()->getTimezone()->getName(),
+        );
+    }
+
+    /** @return array<string, array{string, string}> */
+    public static function timezoneProvider(): array
+    {
+        return [
+            'Sao Paulo'  => ['America/Sao_Paulo', 'America/Sao_Paulo'],
+            'New York'   => ['America/New_York', 'America/New_York'],
+            'Tokyo'      => ['Asia/Tokyo', 'Asia/Tokyo'],
+            'London'     => ['Europe/London', 'Europe/London'],
+            'UTC'        => ['UTC', 'UTC'],
+        ];
+    }
+
+    public function testDistribuiSenhaWithNullTimezoneUsesDefault(): void
+    {
+        $unidade = new Unidade(); // timezone is null
+        $usuario = (new Usuario())->setAdmin(true);
+        $servico = new Servico();
+        $prioridade = new Prioridade();
+        $servicoUnidade = new ServicoUnidade();
+
+        $this
+            ->servicoUnidadeRepository
+            ->expects($this->once())
+            ->method('get')
+            ->with($unidade, $servico)
+            ->willReturn($servicoUnidade);
+
+        $this
+            ->storage
+            ->expects($this->once())
+            ->method('distribui')
+            ->willReturnCallback(function (Atendimento $atendimento) {
+                $tz = $atendimento->getUnidade()->getDateTimeZone();
+                $now = $this->clock->now()->setTimezone($tz);
+
+                $atendimento->setId(1);
+                $atendimento->setDataChegada($now);
+
+                $this->assertSame(
+                    date_default_timezone_get(),
+                    $tz->getName(),
+                );
+            });
+
+        $atendimento = $this->service->distribuiSenha(
+            $unidade,
+            $usuario,
+            $servico,
+            $prioridade,
+        );
+
+        $this->assertNotNull($atendimento->getId());
+        $this->assertNull($atendimento->getUnidade()->getTimezone());
+        $this->assertSame(
+            date_default_timezone_get(),
+            $atendimento->getDataChegada()->getTimezone()->getName(),
+        );
     }
 
     private function buildAtendimento(): Atendimento

@@ -88,30 +88,30 @@
                     {{ atendimento.prioridade.nome }}
                 </p>
             {% endif %}
-            
+
             <p class="senha">
                 {{ atendimento.senha }}
             </p>
-            
+
             {% if atendimento.unidade.impressao.exibirNomeServico %}
                 <p class="servico">
                     {{ atendimento.servico.nome }}
                 </p>
             {% endif %}
-            
+
             {% if atendimento.unidade.impressao.exibirMensagemServico %}
                 <p class="servico">
                     {{ servicoUnidade.mensagem|nl2br }}
                 </p>
             {% endif %}
-            
+
             {% if atendimento.unidade.impressao.exibirData %}
                 <div class="data-hora">
                     <p class="data">
-                        {{ now|date('m/d/Y'|trans) }}
+                        {{ atendimento.dataChegada|date('m/d/Y'|trans, unidade.timezone) }}
                     </p>
                     <p class="hora">
-                        {{ 'print.ticket.date'|trans({ '%time%': now|date('H\\hi') })|raw }}
+                        {{ 'print.ticket.date'|trans({ '%time%': atendimento.dataChegada|date('H\\hi', unidade.timezone) })|raw }}
                     </p>
                 </div>
             {% endif %}

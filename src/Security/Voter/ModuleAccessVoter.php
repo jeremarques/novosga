@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the Novo SGA project.
+ * This file is part of the NovoSGA project.
  *
  * (c) Rogerio Lino <rogeriolino@gmail.com>
  *
@@ -38,7 +38,7 @@ final class ModuleAccessVoter extends Voter
     {
         $user = $token->getUser();
 
-        if (!$user instanceof Usuario || !$subject instanceof InstalledModule) {
+        if (!$user instanceof Usuario) {
             return false;
         }
 

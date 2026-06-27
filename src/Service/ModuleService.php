@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the Novo SGA project.
+ * This file is part of the NovoSGA project.
  *
  * (c) Rogerio Lino <rogeriolino@gmail.com>
  *
@@ -37,12 +37,16 @@ class ModuleService implements ModuleServiceInterface
     {
         $modules = array_map(function ($module) {
             $name = $this->translator->trans($module->getDisplayName(), [], $module->getName());
+            $description = $this->translator->trans($module->getDescription(), [], $module->getName());
             return new InstalledModule(
                 active: true,
                 displayName: $name,
+                description: $description,
                 key: $module->getKeyName(),
                 iconName: $module->getIconName(),
                 homeRoute: $module->getHomeRoute(),
+                website: $module->getWebsite(),
+                author: $module->getAuthor(),
             );
         }, $this->filterModules($this->kernel->getBundles()));
 

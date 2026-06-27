@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the Novo SGA project.
+ * This file is part of the NovoSGA project.
  *
  * (c) Rogerio Lino <rogeriolino@gmail.com>
  *
@@ -38,9 +38,11 @@ class Agendamento implements AgendamentoInterface
     #[ORM\SequenceGenerator(sequenceName: "agendamentos_id_seq", allocationSize: 1, initialValue: 1)]
     protected ?int $id = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    /** Local date (unit timezone) */
+    #[ORM\Column(type: Types::DATE_MUTABLE)]
     private ?DateTimeInterface $data = null;
 
+    /** Local time (unit timezone) */
     #[ORM\Column(type: Types::TIME_MUTABLE)]
     private ?DateTimeInterface $hora = null;
 
@@ -56,7 +58,7 @@ class Agendamento implements AgendamentoInterface
     #[ORM\ManyToOne(targetEntity: Servico::class)]
     private ?ServicoInterface $servico = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
     private ?DateTimeInterface $dataConfirmacao = null;
 
     #[ORM\Column(length: 36, nullable: true)]

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the Novo SGA project.
+ * This file is part of the NovoSGA project.
  *
  * (c) Rogerio Lino <rogeriolino@gmail.com>
  *
@@ -13,8 +13,9 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Storage;
 
-use DateTime;
+use DateTimeImmutable;
 use DateTimeInterface;
+use DateTimeZone;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\LockMode;
 use Exception;
@@ -35,7 +36,6 @@ use Novosga\Entity\AtendimentoInterface;
 use Novosga\Entity\ServicoInterface;
 use Novosga\Entity\UnidadeInterface;
 use Novosga\Entity\UsuarioInterface;
-use PDO;
 
 /**
  * ORM Storage
@@ -62,7 +62,7 @@ abstract class RelationalStorage extends DoctrineStorage
         $contadorTable = $this->em->getClassMetadata(Contador::class)->getTableName();
         $servicoUnidadeTable = $this->em->getClassMetadata(ServicoUnidade::class)->getTableName();
 
-        $query = $conn->prepare("
+        $conn->executeStatement("
             UPDATE {$contadorTable}
             SET numero = (
                 SELECT su.numero_inicial
@@ -72,9 +72,9 @@ abstract class RelationalStorage extends DoctrineStorage
                     su.servico_id = {$contadorTable}.servico_id
             )
             WHERE (unidade_id = :unidade OR :unidade = 0)
-        ");
-        $query->bindValue('unidade', $unidadeId, PDO::PARAM_INT);
-        $query->execute();
+        ", [
+            'unidade' => $unidadeId,
+        ]);
     }
 
     /** {@inheritdoc} */
@@ -97,7 +97,7 @@ abstract class RelationalStorage extends DoctrineStorage
     public function encerrar(
         AtendimentoInterface $atendimento,
         array $codificados,
-        AtendimentoInterface $novoAtendimento = null
+        ?AtendimentoInterface $novoAtendimento = null
     ): void {
         $this->em->beginTransaction();
 
@@ -165,13 +165,13 @@ abstract class RelationalStorage extends DoctrineStorage
                 throw new Exception('Error updating ticket counter');
             }
 
-            $atendimento->setDataChegada(new DateTime());
+            $atendimento->setDataChegada($this->clock->now());
             $atendimento->getSenha()->setNumero($numeroAtual);
 
             if ($agendamento) {
                 $agendamento
                     ->setSituacao(Agendamento::SITUACAO_CONFIRMADO)
-                    ->setDataConfirmacao(new DateTime());
+                    ->setDataConfirmacao($this->clock->now());
             }
 
             $this->em->persist($atendimento);
@@ -190,7 +190,9 @@ abstract class RelationalStorage extends DoctrineStorage
 
         $conn->transactional(function (Connection $conn) use ($self, $unidade, $ateData) {
             $unidadeId = (int) $unidade?->getId();
-            $data = $ateData->format('Y-m-d H:i:s');
+            $data = DateTimeImmutable::createFromInterface($ateData)
+                ->setTimezone(new DateTimeZone('UTC'))
+                ->format('Y-m-d H:i:s');
 
             // tables name
             $historicoTable = $this->em->getClassMetadata(AtendimentoHistorico::class)->getTableName();

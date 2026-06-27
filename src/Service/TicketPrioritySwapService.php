@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the Novo SGA project.
+ * This file is part of the NovoSGA project.
  *
  * (c) Rogerio Lino <rogeriolino@gmail.com>
  *
@@ -30,7 +30,7 @@ class TicketPrioritySwapService
     private const NAMESPACE = 'novosga.swap';
     private const NAME = 'priority_count';
 
-    private ?BehaviorSettings $settings;
+    private ?BehaviorSettings $settings = null;
 
     public function __construct(
         private readonly ApplicationSettingsService $applicationService,

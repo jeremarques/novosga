@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the Novo SGA project.
+ * This file is part of the NovoSGA project.
  *
  * (c) Rogerio Lino <rogeriolino@gmail.com>
  *
@@ -148,8 +148,15 @@ class InstallCommand extends UpdateCommand
                 '[Unity] Unity description: ',
                 'UNI1'
             );
+            $unityTimezone = $this->read(
+                $input,
+                $output,
+                'NOVOSGA_UNITY_TIMEZONE',
+                '[Unity] Unity timezone: ',
+                date_default_timezone_get()
+            );
 
-            $unity = $this->createUnity($unityName, $unityDescription);
+            $unity = $this->createUnity($unityName, $unityDescription, $unityTimezone);
             $this->em->persist($unity);
             $this->em->flush();
         } else {
@@ -327,23 +334,25 @@ class InstallCommand extends UpdateCommand
         return $user;
     }
 
-    private function createUnity(string $name, string $description): Unidade
+    private function createUnity(string $name, string $description, string $timezone): Unidade
     {
-        $unidade = new Unidade();
-        $unidade->setNome($name);
-        $unidade->setDescricao($description);
-        $unidade->setAtivo(true);
+        $unidade = (new Unidade())
+            ->setNome($name)
+            ->setDescricao($description)
+            ->setTimezone($timezone)
+            ->setAtivo(true);
 
         return $unidade;
     }
 
     private function createPriority(string $name, string $description, int $weight): Prioridade
     {
-        $prioridade = new Prioridade();
-        $prioridade->setNome($name);
-        $prioridade->setDescricao($description);
-        $prioridade->setPeso($weight);
-        $prioridade->setAtivo(true);
+        $prioridade = (new Prioridade())
+            ->setNome($name)
+            ->setDescricao($description)
+            ->setPeso($weight)
+            ->setCor($weight === 0 ? '#0000FF' : '#FF0000')
+            ->setAtivo(true);
 
         return $prioridade;
     }

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the Novo SGA project.
+ * This file is part of the NovoSGA project.
  *
  * (c) Rogerio Lino <rogeriolino@gmail.com>
  *
@@ -21,11 +21,6 @@ use Novosga\Repository\ViewAtendimentoRepositoryInterface;
 
 /**
  * @extends ServiceEntityRepository<AtendimentoInterface>
- *
- * @method ViewAtendimento|null find($id, $lockMode = null, $lockVersion = null)
- * @method ViewAtendimento|null findOneBy(array $criteria, array $orderBy = null)
- * @method ViewAtendimento[]    findAll()
- * @method ViewAtendimento[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  *
  * @author Rogério Lino <rogeriolino@gmail.com>
  */

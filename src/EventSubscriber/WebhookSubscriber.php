@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the Novo SGA project.
+ * This file is part of the NovoSGA project.
  *
  * (c) Rogerio Lino <rogeriolino@gmail.com>
  *
@@ -77,7 +77,7 @@ class WebhookSubscriber implements EventSubscriberInterface
             $event instanceof TicketReactivedEvent => WebhookEvent::TICKET_REACTIVE,
             $event instanceof TicketRedirectedEvent => WebhookEvent::TICKET_REDIRECTED,
             $event instanceof TicketStartEvent => WebhookEvent::TICKET_START,
-            $event instanceof TicketTransferedEvent => WebhookEvent::TICKET_TRANSFERED,
+            $event instanceof TicketTransferedEvent => WebhookEvent::TICKET_TRANSFERRED,
             default => null
         };
     }

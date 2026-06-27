@@ -9,21 +9,8 @@ services:
       # database connection
       DATABASE_URL: ${DATABASE_URL}
       APP_LANGUAGE: ${APP_LANGUAGE}
-      # Endereço Mercure para publicar mensagem (onde "mercure" é o nome do host)
-      # esse endereço será chamado internamente via o PHP
-      MERCURE_URL: ${MERCURE_URL}
-      # Endereço Mercure para consumir mensagem
-      # esse endereço será chamado via o navegador web
-      MERCURE_PUBLIC_URL: ${MERCURE_PUBLIC_URL}
-  mercure:
-    image: novosga/mercure:v0.11
-    restart: always
-    ports:
-      - "3000:3000"
-    environment:
-      # same value from ports
-      SERVER_NAME: ${SERVER_NAME}
-      # default publish key, must be changed
+      # mesma chave usada pelo Mercure embutido no FrankenPHP/Caddy
       MERCURE_PUBLISHER_JWT_KEY: ${MERCURE_PUBLISHER_JWT_KEY}
-      MERCURE_SUBSCRIBER_JWT_KEY: ${MERCURE_SUBSCRIBER_JWT_KEY}
-      MERCURE_EXTRA_DIRECTIVES: anonymous 1; cors_origins *
+      MERCURE_JWT_SECRET: ${MERCURE_PUBLISHER_JWT_KEY}
+      REDIS_URL: ${REDIS_URL}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}

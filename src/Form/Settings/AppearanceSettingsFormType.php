@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the Novo SGA project.
+ * This file is part of the NovoSGA project.
  *
  * (c) Rogerio Lino <rogeriolino@gmail.com>
  *
@@ -71,7 +71,10 @@ class AppearanceSettingsFormType extends AbstractType
                 'required' => false,
                 'mapped'   => false,
                 'constraints' => [
-                    new Image(),
+                    new Image(
+                        maxSize: '1M',
+                        mimeTypes: ['image/jpeg', 'image/png', 'image/gif'],
+                    ),
                 ],
                 'attr' => [
                     'accept' => 'image/*',
@@ -82,10 +85,13 @@ class AppearanceSettingsFormType extends AbstractType
                 'required' => false,
                 'mapped'   => false,
                 'constraints' => [
-                    new Image(),
+                    new Image(
+                        maxSize: '1M',
+                        mimeTypes: ['image/jpeg', 'image/png', 'image/gif'],
+                    ),
                 ],
                 'attr' => [
-                    'accept' => 'image/*',
+                    'accept' => 'image/png, image/jpeg, image/gif',
                 ],
             ])
         ;
@@ -98,7 +104,7 @@ class AppearanceSettingsFormType extends AbstractType
         ]);
     }
 
-    public function getBlockPrefix()
+    public function getBlockPrefix(): string
     {
         return 'app_appearance';
     }

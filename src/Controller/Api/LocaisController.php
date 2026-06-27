@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the Novo SGA project.
+ * This file is part of the NovoSGA project.
  *
  * (c) Rogerio Lino <rogeriolino@gmail.com>
  *
@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace App\Controller\Api;
 
 use App\Entity\Local;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 
 /**
  * @extends ApiCrudController<Local>
@@ -33,5 +33,10 @@ class LocaisController extends ApiCrudController
     public function getEntityName(): string
     {
         return Local::class;
+    }
+
+    public function getSearchableFields(): array
+    {
+        return ['id', 'nome'];
     }
 }

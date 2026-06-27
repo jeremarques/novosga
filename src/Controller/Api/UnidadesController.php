@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the Novo SGA project.
+ * This file is part of the NovoSGA project.
  *
  * (c) Rogerio Lino <rogeriolino@gmail.com>
  *
@@ -17,7 +17,7 @@ use App\Entity\Unidade;
 use App\Entity\Atendimento;
 use App\Service\ServicoService;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 
 /**
  * UnidadesController
@@ -38,6 +38,11 @@ class UnidadesController extends ApiCrudController
     public function getEntityName(): string
     {
         return Unidade::class;
+    }
+
+    public function getSearchableFields(): array
+    {
+        return ['id', 'nome'];
     }
 
     #[Route('/{id}/servicos', methods: ['GET'])]

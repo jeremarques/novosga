@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the Novo SGA project.
+ * This file is part of the NovoSGA project.
  *
  * (c) Rogerio Lino <rogeriolino@gmail.com>
  *
@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace App\Controller\Api;
 
 use App\Entity\Departamento;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 
 /**
  * @extends ApiCrudController<Departamento>
@@ -33,5 +33,10 @@ class DepartamentosController extends ApiCrudController
     public function getEntityName(): string
     {
         return Departamento::class;
+    }
+
+    public function getSearchableFields(): array
+    {
+        return ['id', 'nome'];
     }
 }

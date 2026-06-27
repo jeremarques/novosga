@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the Novo SGA project.
+ * This file is part of the NovoSGA project.
  *
  * (c) Rogerio Lino <rogeriolino@gmail.com>
  *
@@ -36,6 +36,8 @@ final readonly class NovaSenha
         public ?int $servico = null,
         public ?Cliente $cliente = null,
         public mixed $metadata = null,
+        #[Range(min: 1)]
+        public ?int $agendamento = null,
     ) {
     }
 }

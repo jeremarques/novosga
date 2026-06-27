@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the Novo SGA project.
+ * This file is part of the NovoSGA project.
  *
  * (c) Rogerio Lino <rogeriolino@gmail.com>
  *
@@ -15,7 +15,7 @@ namespace App\Controller\Api;
 
 use App\Entity\Unidade;
 use App\Entity\PainelSenha;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -33,7 +33,7 @@ class PainelController extends ApiControllerBase
     #[Route('/unidades/{id}/painel', methods: ['GET'])]
     public function painel(Request $request, Unidade $unidade): Response
     {
-        $servicos = explode(',', $request->get('servicos', ''));
+        $servicos = explode(',', $request->query->get('servicos', ''));
 
         $senhas = $this
             ->getManager()

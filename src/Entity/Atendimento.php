@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the Novo SGA project.
+ * This file is part of the NovoSGA project.
  *
  * (c) Rogerio Lino <rogeriolino@gmail.com>
  *
@@ -95,6 +95,7 @@ class Atendimento extends AbstractAtendimento
     public function jsonSerialize(): array
     {
         return array_merge(parent::jsonSerialize(), [
+            'codificados' => $this->codificados->toArray(),
             'hash' => $this->hash(),
         ]);
     }

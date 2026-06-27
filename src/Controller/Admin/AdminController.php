@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the Novo SGA project.
+ * This file is part of the NovoSGA project.
  *
  * (c) Rogerio Lino <rogeriolino@gmail.com>
  *
@@ -19,7 +19,7 @@ use App\Form\Settings\QueueSettingsFormType;
 use App\Service\ApplicationSettingsService;
 use App\Service\AtendimentoService;
 use Novosga\Http\Envelope;
-use Novosga\Entity\UsuarioInterface;
+use App\Entity\Usuario;
 use Novosga\Service\FileUploaderServiceInterface;
 use Novosga\Settings\AppearanceSettings;
 use Novosga\Settings\BehaviorSettings;
@@ -30,7 +30,7 @@ use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 
 /**
  * AdminController
@@ -92,10 +92,19 @@ class AdminController extends AbstractController
         ]);
     }
 
+    #[Route('/dados', name: 'dados')]
+    public function dados(
+        Request $request,
+    ): Response {
+        return $this->render('admin/dados/index.html.twig', [
+            'tab' => 'dados',
+        ]);
+    }
+
     #[Route("/remove-settings-file", name: "remove_settings_file", methods: ['DELETE'])]
     public function removeFile(Request $request, ApplicationSettingsService $service): Response
     {
-        $key = $request->get('key');
+        $key = $request->request->get('key');
         switch ($key) {
             case 'logoNavbar':
             case 'logoLogin':
@@ -115,7 +124,7 @@ class AdminController extends AbstractController
     #[Route('/acumular_atendimentos', name: 'acumular_atendimentos', methods: ['POST'])]
     public function acumularAtendimentos(AtendimentoService $service, ClockInterface $clock): Response
     {
-        /** @var UsuarioInterface */
+        /** @var Usuario */
         $usuario = $this->getUser();
 
         $envelope = new Envelope();
@@ -127,7 +136,7 @@ class AdminController extends AbstractController
     #[Route('/limpar_atendimentos', name: 'limpar_atendimentos', methods: ['POST'])]
     public function limparAtendimentos(AtendimentoService $service): Response
     {
-        /** @var UsuarioInterface */
+        /** @var Usuario */
         $usuario = $this->getUser();
 
         $envelope = new Envelope();

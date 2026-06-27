@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the Novo SGA project.
+ * This file is part of the NovoSGA project.
  *
  * (c) Rogerio Lino <rogeriolino@gmail.com>
  *
@@ -16,7 +16,9 @@ namespace App\Tests\Controller\Api;
 use App\Service\AtendimentoService;
 use App\Tests\TestHelper;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\Clock\MockClock;
 
 /**
  * TriageControllerTest
@@ -31,7 +33,13 @@ class TriagemControllerTest extends WebTestCase
     {
         $client = static::createClient();
         $container = $client->getContainer();
+
+        $clock = new MockClock('2026-03-29 15:20:00');
+        $container->set(ClockInterface::class, $clock);
+
         $this->em = $container->get(EntityManagerInterface::class);
+
+        $client->disableReboot();
 
         TestHelper::removeTestData($this->em);
     }
@@ -261,5 +269,183 @@ class TriagemControllerTest extends WebTestCase
         $this->assertSame($result['senha']['sigla'], $servicoUnidade->getSigla());
         $this->assertSame($result['servico']['id'], $servico->getId());
         $this->assertSame($result['prioridade']['id'], $prioridade->getId());
+        $this->assertNull($result['dataAgendamento']);
+    }
+
+    public function testDistribuiSenhaWithInvalidAgendamentoId(): void
+    {
+        $client = static::getClient();
+        $accessToken = TestHelper::generateJwtToken(static::getContainer());
+        $unidade = TestHelper::createUnidade($this->em);
+        $servico = TestHelper::createServico($this->em);
+        $prioridade = TestHelper::createPrioridade($this->em);
+        $perfil = TestHelper::createPerfil($this->em);
+        $usuario = TestHelper::getUser($this->em);
+
+        TestHelper::linkUnidadeUsuario($this->em, $unidade, $usuario, $perfil);
+        TestHelper::linkServicoUnidade($this->em, $servico, $unidade);
+
+        $data = [
+            'unidade' => $unidade->getId(),
+            'servico' => $servico->getId(),
+            'prioridade' => $prioridade->getId(),
+            'agendamento' => 0,
+        ];
+
+        $client->jsonRequest('POST', '/api/distribui', parameters: $data, server: [
+            'HTTP_AUTHORIZATION' => sprintf('Bearer %s', $accessToken),
+        ]);
+
+        $this->assertResponseStatusCodeSame(422);
+        $response = $client->getResponse();
+        $result = json_decode($response->getContent(), true);
+
+        $this->assertIsArray($result['error']);
+        $this->assertArrayHasKey('agendamento', $result['error']);
+    }
+
+    public function testDistribuiSenhaWithAgendamento(): void
+    {
+        $client = static::getClient();
+        $usuario = TestHelper::getUser($this->em);
+        $accessToken = TestHelper::generateJwtToken(static::getContainer());
+        $unidade = TestHelper::createUnidade($this->em);
+        $servico = TestHelper::createServico($this->em);
+        $prioridade = TestHelper::createPrioridade($this->em);
+        $perfil = TestHelper::createPerfil($this->em);
+        $cliente = TestHelper::createCliente($this->em);
+
+        TestHelper::linkUnidadeUsuario($this->em, $unidade, $usuario, $perfil);
+        $servicoUnidade = TestHelper::linkServicoUnidade($this->em, $servico, $unidade);
+
+        // schedule at 15:30, clock is at 15:20 (future appointment)
+        $agendamento = TestHelper::createAgendamento(
+            $this->em,
+            $cliente,
+            $unidade,
+            $servico,
+            new \DateTime('2026-03-29'),
+            new \DateTime('15:30'),
+        );
+
+        $data = [
+            'unidade' => $unidade->getId(),
+            'servico' => $servico->getId(),
+            'prioridade' => $prioridade->getId(),
+            'agendamento' => $agendamento->getId(),
+        ];
+
+        $client->jsonRequest('POST', '/api/distribui', parameters: $data, server: [
+            'HTTP_AUTHORIZATION' => sprintf('Bearer %s', $accessToken),
+        ]);
+
+        $this->assertResponseStatusCodeSame(201);
+        $response = $client->getResponse();
+        $result = json_decode($response->getContent(), true);
+
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('id', $result);
+        $this->assertSame($result['status'], AtendimentoService::SENHA_EMITIDA);
+        $this->assertSame($result['senha']['sigla'], $servicoUnidade->getSigla());
+        $this->assertNotNull($result['dataAgendamento']);
+        $this->assertSame($result['cliente']['id'], $cliente->getId());
+    }
+
+    public function testDistribuiSenhaWithExpiredAgendamento(): void
+    {
+        $client = static::getClient();
+        $usuario = TestHelper::getUser($this->em);
+        $accessToken = TestHelper::generateJwtToken(static::getContainer());
+        $unidade = TestHelper::createUnidade($this->em);
+        $servico = TestHelper::createServico($this->em);
+        $prioridade = TestHelper::createPrioridade($this->em);
+        $perfil = TestHelper::createPerfil($this->em);
+        $cliente = TestHelper::createCliente($this->em);
+
+        TestHelper::linkUnidadeUsuario($this->em, $unidade, $usuario, $perfil);
+        TestHelper::linkServicoUnidade($this->em, $servico, $unidade);
+
+        // 13:00 is 140 mins before clock (15:20) — exceeds default 60 min delay
+        $agendamento = TestHelper::createAgendamento(
+            $this->em,
+            $cliente,
+            $unidade,
+            $servico,
+            new \DateTime('2026-03-29'),
+            new \DateTime('13:00'),
+        );
+
+        $data = [
+            'unidade' => $unidade->getId(),
+            'servico' => $servico->getId(),
+            'prioridade' => $prioridade->getId(),
+            'agendamento' => $agendamento->getId(),
+        ];
+
+        $client->jsonRequest('POST', '/api/distribui', parameters: $data, server: [
+            'HTTP_AUTHORIZATION' => sprintf('Bearer %s', $accessToken),
+        ]);
+
+        $this->assertResponseStatusCodeSame(422);
+        $response = $client->getResponse();
+        $result = json_decode($response->getContent(), true);
+
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('error', $result);
+        $this->assertStringContainsString(
+            'Agendamento expirado. Tempo máximo de espera de 60 minutos.',
+            $result['error'],
+        );
+    }
+
+    public function testDistribuiSenhaWithDifferentTimezones(): void
+    {
+        $client = static::getClient();
+        $usuario = TestHelper::getUser($this->em);
+        $accessToken = TestHelper::generateJwtToken(static::getContainer());
+        $perfil = TestHelper::createPerfil($this->em);
+        $servico = TestHelper::createServico($this->em);
+        $prioridade = TestHelper::createPrioridade($this->em);
+
+        // unidade with UTC timezone
+        $unidadeUtc = TestHelper::createUnidade($this->em, 'UTC Unit', 'UTC');
+        TestHelper::linkUnidadeUsuario($this->em, $unidadeUtc, $usuario, $perfil);
+        TestHelper::linkServicoUnidade($this->em, $servico, $unidadeUtc);
+
+        // unidade with America/Sao_Paulo timezone
+        $unidadeSp = TestHelper::createUnidade($this->em, 'SP Unit', 'America/Sao_Paulo');
+        TestHelper::linkUnidadeUsuario($this->em, $unidadeSp, $usuario, $perfil);
+        TestHelper::linkServicoUnidade($this->em, $servico, $unidadeSp);
+
+        // distribui senha for UTC unidade
+        $client->jsonRequest('POST', '/api/distribui', parameters: [
+            'unidade' => $unidadeUtc->getId(),
+            'servico' => $servico->getId(),
+            'prioridade' => $prioridade->getId(),
+        ], server: [
+            'HTTP_AUTHORIZATION' => sprintf('Bearer %s', $accessToken),
+        ]);
+
+        $this->assertResponseStatusCodeSame(201);
+        $resultUtc = json_decode($client->getResponse()->getContent(), true);
+
+        // distribui senha for Sao Paulo unidade
+        $client->jsonRequest('POST', '/api/distribui', parameters: [
+            'unidade' => $unidadeSp->getId(),
+            'servico' => $servico->getId(),
+            'prioridade' => $prioridade->getId(),
+        ], server: [
+            'HTTP_AUTHORIZATION' => sprintf('Bearer %s', $accessToken),
+        ]);
+
+        $this->assertResponseStatusCodeSame(201);
+        $resultSp = json_decode($client->getResponse()->getContent(), true);
+
+        // verify the offsets are different
+        $dtUtc = new \DateTimeImmutable($resultUtc['dataChegada']);
+        $dtSp = new \DateTimeImmutable($resultSp['dataChegada']);
+
+        $this->assertSame('2026-03-29 15:20', $dtUtc->format('Y-m-d H:i'));
+        $this->assertSame('2026-03-29 12:20', $dtSp->format('Y-m-d H:i'));
     }
 }

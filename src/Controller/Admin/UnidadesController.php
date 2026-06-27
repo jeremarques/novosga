@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the Novo SGA project.
+ * This file is part of the NovoSGA project.
  *
  * (c) Rogerio Lino <rogeriolino@gmail.com>
  *
@@ -18,7 +18,7 @@ use App\Entity\Unidade as Entity;
 use App\Form\UnidadeType as EntityType;
 use App\Repository\UnidadeRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -65,7 +65,7 @@ class UnidadesController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             if (!$entity->getId()) {
-                $entity->getImpressao()->setCabecalho('Novo SGA');
+                $entity->getImpressao()->setCabecalho('NovoSGA');
                 $entity->getImpressao()->setRodape('========');
             }
 

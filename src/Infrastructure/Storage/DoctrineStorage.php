@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the Novo SGA project.
+ * This file is part of the NovoSGA project.
  *
  * (c) Rogerio Lino <rogeriolino@gmail.com>
  *
@@ -16,6 +16,7 @@ namespace App\Infrastructure\Storage;
 use Novosga\Infrastructure\StorageInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityRepository;
+use Psr\Clock\ClockInterface;
 
 /**
  * Doctrine Storage
@@ -26,6 +27,7 @@ abstract class DoctrineStorage implements StorageInterface
 {
     public function __construct(
         protected readonly EntityManagerInterface $em,
+        protected readonly ClockInterface $clock,
     ) {
     }
 
