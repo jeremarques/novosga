@@ -29,4 +29,4 @@ RUN echo "APP_BUILD_NUMBER=$GIT_COMMIT" >> .env.local \
     && composer dump-autoload --no-dev --classmap-authoritative \
     && composer dump-env prod
 
-EXPOSE 80
+EXPOSE 8080
