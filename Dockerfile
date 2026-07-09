@@ -15,7 +15,7 @@ ENV APP_ENV=prod
 ENV APP_DEBUG=0
 ENV TZ=America/Sao_Paulo
 ENV MERCURE_PUBLIC_URL="/.well-known/mercure"
-ENV MERCURE_URL="http://127.0.0.1:8080/.well-known/mercure"
+ENV MERCURE_URL="http://127.0.0.1/.well-known/mercure"
 
 COPY --chown=65534:65534 . /app
 COPY --from=cert --chown=65534:65534 /jwt /app/config/jwt
@@ -29,4 +29,4 @@ RUN echo "APP_BUILD_NUMBER=$GIT_COMMIT" >> .env.local \
     && composer dump-autoload --no-dev --classmap-authoritative \
     && composer dump-env prod
 
-EXPOSE 8080
+EXPOSE 80
