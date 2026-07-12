@@ -1,0 +1,17 @@
+{
+    "_hash": "b80698771a1eb2e3bb4f44c288a1fcc2a27667924071937be55572c50a11765b",
+    "patches": {
+        "novosga/attendance-bundle": [
+            {
+                "package": "novosga/attendance-bundle",
+                "description": "Synchronize API calls with the attendance UI",
+                "url": "patches/attendance-bundle-api-call-ui.patch",
+                "sha256": "691f2775d246a34fc5233d72bea93d07ae8d79c405e3a4980ac5ccf63ee05c22",
+                "depth": 1,
+                "extra": {
+                    "provenance": "root"
+                }
+            }
+        ]
+    }
+}

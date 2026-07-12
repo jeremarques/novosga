@@ -67,17 +67,21 @@ class AtendimentosController extends ApiCrudController
                 throw new Exception($error);
             }
 
-            $success = $service->chamarAtendimento(
-                $atendimento,
-                $usuario,
-                $local,
-                $dto->numeroLocal
-            );
+            if ($atendimento->getStatus() !== AtendimentoService::CHAMADO_PELA_MESA) {
+                $success = $service->chamarAtendimento(
+                    $atendimento,
+                    $usuario,
+                    $local,
+                    $dto->numeroLocal
+                );
 
-            if (!$success) {
-                $error = $this->translate('error.api.ticket_call_failed');
-                throw new Exception($error);
+                if (!$success) {
+                    $error = $this->translate('error.api.ticket_call_failed');
+                    throw new Exception($error);
+                }
             }
+
+            $service->chamarSenha($atendimento, $usuario);
 
             $status = 200;
             $response = $atendimento;

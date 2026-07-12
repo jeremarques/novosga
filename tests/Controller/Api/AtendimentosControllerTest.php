@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace App\Tests\Controller\Api;
 
 use App\Entity\Atendimento;
+use App\Entity\PainelSenha;
 use App\Entity\Senha;
 use App\Service\AtendimentoService;
 use App\Tests\TestHelper;
@@ -89,6 +90,41 @@ class AtendimentosControllerTest extends WebTestCase
         $this->assertArrayHasKey('id', $result);
         $this->assertEquals($atendimento->getId(), $result['id']);
         $this->assertEquals(AtendimentoService::CHAMADO_PELA_MESA, $result['status']);
+
+        $painelSenhas = $this->em->getRepository(PainelSenha::class)->findAll();
+        $this->assertCount(1, $painelSenhas);
+        $this->assertSame($atendimento->getSenha()->getNumero(), $painelSenhas[0]->getNumeroSenha());
+        $this->assertSame($atendimento->getSenha()->getSigla(), $painelSenhas[0]->getSiglaSenha());
+        $this->assertSame($local->getNome(), $painelSenhas[0]->getLocal());
+        $this->assertSame($data['numeroLocal'], $painelSenhas[0]->getNumeroLocal());
+    }
+
+    public function testChamarAtendimentoNovamente(): void
+    {
+        $client = static::getClient();
+        $accessToken = TestHelper::generateJwtToken(static::getContainer());
+        $atendimento = $this->createAtendimento();
+        $local = TestHelper::createLocal($this->em, 'Guichê 1');
+
+        $data = [
+            'local' => $local->getId(),
+            'numeroLocal' => 1,
+        ];
+        $url = sprintf('/api/atendimentos/%s/chamar', $atendimento->getId());
+        $server = [
+            'HTTP_AUTHORIZATION' => sprintf('Bearer %s', $accessToken),
+        ];
+
+        $client->jsonRequest('POST', $url, parameters: $data, server: $server);
+        $this->assertResponseStatusCodeSame(200);
+        $firstResult = json_decode($client->getResponse()->getContent(), true);
+
+        $client->jsonRequest('POST', $url, parameters: $data, server: $server);
+
+        $this->assertResponseStatusCodeSame(200);
+        $secondResult = json_decode($client->getResponse()->getContent(), true);
+        $this->assertSame($firstResult['dataChamada'], $secondResult['dataChamada']);
+        $this->assertCount(2, $this->em->getRepository(PainelSenha::class)->findAll());
     }
 
     public function testChamarAtendimentoWithWrongLocalId(): void

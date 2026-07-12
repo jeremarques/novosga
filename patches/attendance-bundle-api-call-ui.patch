@@ -1,0 +1,25 @@
+diff --git a/src/Resources/public/js/script.js b/src/Resources/public/js/script.js
+--- a/src/Resources/public/js/script.js
++++ b/src/Resources/public/js/script.js
+@@ -507,6 +507,9 @@
+ 
+             App.SSE.onmessage = (e, data) => {
+                 this.update();
++                if (data?.['@type'] === 'ticket') {
++                    this.recarregar();
++                }
+             };
+ 
+             // ajax polling fallback
+diff --git a/src/Resources/views/default/index.html.twig b/src/Resources/views/default/index.html.twig
+--- a/src/Resources/views/default/index.html.twig
++++ b/src/Resources/views/default/index.html.twig
+@@ -60,7 +60,7 @@
+                                     <button type="button"
+                                             class="btn btn-primary"
+                                             title="{{ 'button.call_next'|trans }}"
+-                                            v-bind:disabled="busy || total === 0 || (atendimento && (atendimento.status !== 'chamado'))"
++                                            v-bind:disabled="busy || (!atendimento && total === 0) || (atendimento && atendimento.status !== 'chamado')"
+                                             v-on:click="chamar">
+                                         <i class="fa fa-bullhorn"></i>
+                                         <span v-if="atendimento">{{ 'button.call_again'|trans }}</span>

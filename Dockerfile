@@ -22,6 +22,8 @@ COPY --from=cert --chown=65534:65534 /jwt /app/config/jwt
 COPY etc/Caddyfile /etc/frankenphp/Caddyfile
 COPY etc/php.ini $PHP_INI_DIR/php.ini
 
+RUN apk add --no-cache patch
+
 USER 65534
 
 RUN echo "APP_BUILD_NUMBER=$GIT_COMMIT" >> .env.local \
