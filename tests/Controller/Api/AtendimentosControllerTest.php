@@ -127,6 +127,64 @@ class AtendimentosControllerTest extends WebTestCase
         $this->assertCount(2, $this->em->getRepository(PainelSenha::class)->findAll());
     }
 
+    public function testChamarOutroAtendimentoComUsuarioOcupado(): void
+    {
+        $client = static::getClient();
+        $accessToken = TestHelper::generateJwtToken(static::getContainer());
+        $primeiro = $this->createAtendimento();
+        $segundo = $this->createAtendimento();
+        $local = TestHelper::createLocal($this->em, 'Guichê 1');
+        $data = [
+            'local' => $local->getId(),
+            'numeroLocal' => 1,
+        ];
+        $server = [
+            'HTTP_AUTHORIZATION' => sprintf('Bearer %s', $accessToken),
+        ];
+
+        $client->jsonRequest(
+            'POST',
+            sprintf('/api/atendimentos/%s/chamar', $primeiro->getId()),
+            parameters: $data,
+            server: $server,
+        );
+        $this->assertResponseStatusCodeSame(200);
+
+        $client->jsonRequest(
+            'POST',
+            sprintf('/api/atendimentos/%s/chamar', $segundo->getId()),
+            parameters: $data,
+            server: $server,
+        );
+
+        $this->assertResponseStatusCodeSame(422);
+        $result = json_decode($client->getResponse()->getContent(), true);
+        $this->assertSame('Usuário já possui um atendimento em andamento.', $result['error']);
+        $this->assertCount(1, $this->em->getRepository(PainelSenha::class)->findAll());
+    }
+
+    public function testRecuperaUsuarioComMultiplosAtendimentosEmAndamento(): void
+    {
+        $usuario = TestHelper::getUser($this->em);
+        $primeiro = $this->createAtendimento()
+            ->setUsuario($usuario)
+            ->setStatus(AtendimentoService::CHAMADO_PELA_MESA);
+        $segundo = $this->createAtendimento()
+            ->setUsuario($usuario)
+            ->setStatus(AtendimentoService::ATENDIMENTO_INICIADO);
+        $this->em->flush();
+
+        $service = static::getContainer()->get(AtendimentoService::class);
+        $this->assertNull($service->getAtendimentoAndamento($usuario, null));
+
+        $this->em->refresh($primeiro);
+        $this->em->refresh($segundo);
+        $this->assertSame(AtendimentoService::SENHA_EMITIDA, $primeiro->getStatus());
+        $this->assertSame(AtendimentoService::SENHA_EMITIDA, $segundo->getStatus());
+        $this->assertNull($primeiro->getUsuario());
+        $this->assertNull($segundo->getUsuario());
+    }
+
     public function testChamarAtendimentoWithWrongLocalId(): void
     {
         $client = static::getClient();

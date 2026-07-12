@@ -67,7 +67,18 @@ class AtendimentosController extends ApiCrudController
                 throw new Exception($error);
             }
 
+            $atendimentoAtual = $service->getAtendimentoAndamento($usuario, null);
+            if ($atendimentoAtual && $atendimentoAtual->getId() !== $atendimento->getId()) {
+                $error = $this->translate('error.api.user_busy');
+                throw new Exception($error);
+            }
+
             if ($atendimento->getStatus() !== AtendimentoService::CHAMADO_PELA_MESA) {
+                if ($atendimentoAtual) {
+                    $error = $this->translate('error.api.user_busy');
+                    throw new Exception($error);
+                }
+
                 $success = $service->chamarAtendimento(
                     $atendimento,
                     $usuario,
@@ -79,6 +90,9 @@ class AtendimentosController extends ApiCrudController
                     $error = $this->translate('error.api.ticket_call_failed');
                     throw new Exception($error);
                 }
+            } elseif ($atendimento->getUsuario()?->getId() !== $usuario->getId()) {
+                $error = $this->translate('error.api.user_busy');
+                throw new Exception($error);
             }
 
             $service->chamarSenha($atendimento, $usuario);

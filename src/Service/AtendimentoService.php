@@ -383,14 +383,14 @@ class AtendimentoService implements AtendimentoServiceInterface
                 ->atendimentoRepository
                 ->createQueryBuilder('e')
                 ->update()
-                ->set('e.status', ':status')
+                ->set('e.status', ':newStatus')
                 ->set('e.usuario', ':null')
                 ->where('e.usuario = :usuario')
-                ->andWhere('e.status IN (:status)')
-                ->setParameter('status', 1)
+                ->andWhere('e.status IN (:currentStatuses)')
+                ->setParameter('newStatus', self::SENHA_EMITIDA)
                 ->setParameter('null', null)
                 ->setParameter('usuario', $usuario)
-                ->setParameter('status', $status)
+                ->setParameter('currentStatuses', $status)
                 ->getQuery()
                 ->execute();
 
