@@ -15,6 +15,7 @@ namespace App\Controller\Api;
 
 use App\Dto\AlterarSenhaUsuario;
 use App\Dto\AtualizarUsuario;
+use App\Dto\ConfigurarAtendimentoUsuario;
 use App\Dto\ConfigurarServicoUsuario;
 use App\Dto\CriarUsuario;
 use App\Entity\Usuario;
@@ -110,6 +111,24 @@ class UsuariosController extends ApiControllerBase
         return $this->json(
             $this->atendimentoService->getConfiguration($this->currentUser(), $unidadeId),
         );
+    }
+
+    #[Route(
+        '/me/unidades/{unidadeId}/atendimento',
+        name: 'put_my_attendance',
+        methods: ['PUT'],
+        format: 'json',
+    )]
+    public function putMyAttendance(
+        #[MapRequestPayload] ConfigurarAtendimentoUsuario $data,
+        int $unidadeId,
+    ): Response {
+        return $this->json($this->atendimentoService->putConfiguration(
+            $this->currentUser(),
+            $unidadeId,
+            (int) $data->localId,
+            (int) $data->numeroLocal,
+        ));
     }
 
     #[Route(

@@ -137,6 +137,7 @@ class UsuariosControllerTest extends WebTestCase
         TestHelper::linkUnidadeUsuario($this->em, $unidade, $actor, $perfil);
         $servico = TestHelper::createServico($this->em, 'Atendimento Geral');
         TestHelper::linkServicoUnidade($this->em, $servico, $unidade, 'AG');
+        $local = TestHelper::createLocal($this->em, 'Guichê');
         $accessToken = TestHelper::generateJwtToken(static::getContainer());
         $baseUrl = sprintf('/api/usuarios/me/unidades/%d', $unidade->getId());
 
@@ -147,6 +148,17 @@ class UsuariosControllerTest extends WebTestCase
         $this->assertSame($unidade->getId(), $result['unidade']['id']);
         $this->assertSame($servico->getId(), $result['servicosDisponiveis'][0]['id']);
         $this->assertSame([], $result['servicos']);
+
+        $client->jsonRequest(
+            'PUT',
+            $baseUrl . '/atendimento',
+            parameters: ['localId' => $local->getId(), 'numeroLocal' => 7],
+            server: $this->auth($accessToken),
+        );
+        $this->assertResponseIsSuccessful();
+        $result = json_decode($client->getResponse()->getContent(), true);
+        $this->assertSame($local->getId(), $result['local']['id']);
+        $this->assertSame(7, $result['numeroLocal']);
 
         $serviceUrl = sprintf('%s/servicos/%d', $baseUrl, $servico->getId());
         $client->jsonRequest('PUT', $serviceUrl, parameters: ['peso' => 3], server: $this->auth($accessToken));

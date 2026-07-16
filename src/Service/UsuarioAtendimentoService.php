@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Entity\Local;
 use App\Entity\Unidade;
 use App\Entity\Usuario;
 use App\Repository\LocalRepository;
@@ -90,6 +91,25 @@ final class UsuarioAtendimentoService
             'servicos' => $servicos,
             'servicosDisponiveis' => $disponiveis,
         ];
+    }
+
+    /** @return array<string,mixed> */
+    public function putConfiguration(
+        Usuario $usuario,
+        int $unidadeId,
+        int $localId,
+        int $numeroLocal,
+    ): array {
+        $this->getAccessibleUnit($usuario, $unidadeId);
+
+        $local = $this->localRepository->find($localId);
+        if (!$local instanceof Local) {
+            throw new UnprocessableEntityHttpException('Local de atendimento inválido.');
+        }
+
+        $this->usuarioService->updateAtendente($usuario, null, $localId, $numeroLocal);
+
+        return $this->getConfiguration($usuario, $unidadeId);
     }
 
     /** @return array<string,mixed> */
