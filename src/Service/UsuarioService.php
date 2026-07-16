@@ -166,7 +166,8 @@ class UsuarioService implements UsuarioServiceInterface
     public function addServicoUsuario(
         UsuarioInterface $usuario,
         ServicoInterface $servico,
-        UnidadeInterface $unidade
+        UnidadeInterface $unidade,
+        int $peso = 1,
     ): ServicoUsuarioInterface {
         $em = $this->storage->getManager();
 
@@ -174,7 +175,7 @@ class UsuarioService implements UsuarioServiceInterface
         $servicoUsuario->setUsuario($usuario);
         $servicoUsuario->setServico($servico);
         $servicoUsuario->setUnidade($unidade);
-        $servicoUsuario->setPeso(1);
+        $servicoUsuario->setPeso($peso);
 
         $em->persist($servicoUsuario);
         $em->flush();

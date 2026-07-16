@@ -37,7 +37,76 @@ class UsuarioRepository extends ServiceEntityRepository implements UsuarioReposi
 
     public function findOneByLogin(string $login): ?UsuarioInterface
     {
-        return $this->findOneBy(['login' => $login]);
+        return $this
+            ->createQueryBuilder('e')
+            ->where('e.login = :login')
+            ->andWhere('e.deletedAt IS NULL')
+            ->setParameter('login', $login)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    public function findNotDeleted(int $id): ?Usuario
+    {
+        return $this
+            ->createQueryBuilder('e')
+            ->where('e.id = :id')
+            ->andWhere('e.deletedAt IS NULL')
+            ->setParameter('id', $id)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    /**
+     * @param array<string,mixed> $criteria
+     * @param array<string,string> $orderBy
+     * @param int[] $allowedUnitIds
+     * @return Usuario[]
+     */
+    public function findAccessible(
+        UsuarioInterface $actor,
+        array $criteria,
+        array $orderBy,
+        int $limit,
+        int $offset,
+        array $allowedUnitIds,
+    ): array {
+        $qb = $this
+            ->createQueryBuilder('e')
+            ->where('e.deletedAt IS NULL')
+            ->setMaxResults($limit)
+            ->setFirstResult($offset);
+
+        if (!$actor->isAdmin()) {
+            $qb
+                ->distinct()
+                ->join('e.lotacoes', 'l')
+                ->andWhere('e.admin = FALSE');
+
+            if ($allowedUnitIds === []) {
+                $qb->andWhere('1 = 0');
+            } else {
+                $qb
+                    ->andWhere('IDENTITY(l.unidade) IN (:allowedUnitIds)')
+                    ->setParameter('allowedUnitIds', $allowedUnitIds);
+            }
+        }
+
+        foreach ($criteria as $field => $value) {
+            $qb
+                ->andWhere("e.{$field} = :{$field}")
+                ->setParameter($field, $value);
+        }
+
+        foreach ($orderBy as $field => $direction) {
+            $qb->addOrderBy("e.{$field}", $direction);
+        }
+
+        if ($orderBy === []) {
+            $qb->orderBy('e.nome', 'ASC');
+        }
+
+        return $qb->getQuery()->getResult();
     }
 
     /** {@inheritdoc} */
@@ -72,7 +141,8 @@ class UsuarioRepository extends ServiceEntityRepository implements UsuarioReposi
         $qb = $this
             ->createQueryBuilder('e')
             ->leftJoin('e.lotacoes', 'l')
-            ->where('e.admin = TRUE OR (e.admin = FALSE AND l.unidade = :unidade)')
+            ->where('e.deletedAt IS NULL')
+            ->andWhere('(e.admin = TRUE OR (e.admin = FALSE AND l.unidade = :unidade))')
             ->setParameter('unidade', $unidade)
             ->orderBy('e.nome');
 

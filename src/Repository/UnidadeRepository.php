@@ -55,7 +55,7 @@ class UnidadeRepository extends ServiceEntityRepository implements UnidadeReposi
         if (!$usuario->isAdmin()) {
             $qb
                 ->join(Lotacao::class, 'l', 'WITH', 'l.unidade = e')
-                ->where('l.usuario = :usuario')
+                ->andWhere('l.usuario = :usuario')
                 ->setParameter('usuario', $usuario);
         }
 
